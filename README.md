@@ -36,17 +36,17 @@ We are translating Kornblume to other languages and we need your help! [Help us 
 ## Development
 ### Recommended IDE Setup
 
- - [VSCode](https://code.visualstudio.com/)
- - [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur)
- - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+- [VSCode](https://code.visualstudio.com/)
+- [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur)
+- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
       **Strongly recommend setting up ESLint to auto-fix on save, please check [here](https://www.digitalocean.com/community/tutorials/workflow-auto-eslinting#step-4-adding-code-actions-on-save)**.
- - [i18n Ally](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
+- [i18n Ally](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
 
 ### Customize configuration
 
 See [Vite Configuration Reference](https://vitejs.dev/config/).
 
-### Project Setup
+### Project Setup: Install Dependencies
 
 ```sh
 npm install
@@ -58,14 +58,29 @@ npm install
 npm run dev
 ```
 
+To enable access from another device on your network, use `npm run dev -- --host`. This is great for testing on a real mobile device.
+
 #### Compile and Minify for Production
 
 ```sh
 npm run build
 ```
 
+#### Deploy to Your Github Pages
+
+This is one way to manually test any changes on a device that isn't on the same network as the development machine.
+
+- Build the project and push it to a gh-pages branch of your repository.
+  - In Windows CMD or PowerShell: `npm run deploy`
+  - In POSIX-compliant shells: `npm run deploy-linux`
+- Configure the branch to be served:
+  - Enable GitHub pages in Settings > Pages.
+  - Choose source *Deploy from a branch* and select the `gh-pages` branch
+
 #### Create .env file
-```sh
-VITE_GOOGLE_API_KEY = ''
-VITE_GOOGLE_CLIENT_ID = ''
-```
+
+This app optionally uses the Google API to sync data using Google Drive. You can acquire credentials from the [Google Cloud Console](https://console.cloud.google.com/auth/).
+- Create an **OAuth 2.0 Client ID** of type *Web Application*.
+- Under "Authorized JavaScript origins," add your development URIs (e.g., `http://localhost:5173` or `https://[username].github.io`).
+- Data Access permissions requested should include `.../auth/userinfo.email`, `.../auth/drive.file`, and `.../auth/drive.appdata`.
+- Add your API Key and Client ID to your `.env` file, based on `.env.example`
