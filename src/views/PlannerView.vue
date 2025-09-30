@@ -6,6 +6,7 @@ import { usePlannerStore } from '@/stores/plannerStore'
 import { useActivityStore } from '@/stores/activityStore'
 import { useWildernessStore } from '@/stores/wildernessStore'
 import { usePlannerSettingsStore } from '@/stores/plannerSettingsStore'
+import { usePlannerStagesStore } from '@/stores/plannerStagesStore'
 import { useDataStore } from '@/stores/dataStore'
 import { IArcanist, ISelectedArcanist } from '@/types'
 import { formatArcanists, sortSelectedArcanists } from '@/composables/arcanists'
@@ -15,6 +16,7 @@ import PlannerSelector from '@/components/planner/PlannerSelector.vue'
 import PlannerEdit from '@/components/planner/PlannerEdit.vue'
 import PlannerActivity from '@/components/planner/PlannerActivity.vue'
 import PlannerWilderness from '@/components/planner/PlannerWilderness.vue'
+import PlannerStages from '@/components/planner/PlannerStages.vue'
 import PlannerWarehouse from '@/components/planner/PlannerWarehouse.vue'
 import PlannerSettings from '@/components/planner/PlannerSettings.vue'
 import PlannerTotal from '@/components/planner/PlannerTotal.vue'
@@ -27,6 +29,7 @@ const activityStore = useActivityStore()
 const wildernessStore = useWildernessStore()
 const arcanistStore = useDataStore().arcanists
 const settingsStore = usePlannerSettingsStore()
+const plannerStagesStore = usePlannerStagesStore()
 const listArcanists = ref<IArcanist[]>([])
 const isLargeScreen = ref(false);
 
@@ -43,6 +46,7 @@ const isActivity = ref(false)
 const isWilderness = ref(false)
 const isWarehouse = ref(false)
 const isSettings = ref(false)
+const isStages = ref(false)
 
 const activityRef = ref(null) // Ref to close modal
 const arcanistListRef = ref(null)
@@ -50,6 +54,7 @@ const plannerEditRef = ref(null)
 const wildernessRef = ref(null)
 const warehouseRef = ref(null)
 const settingsRef = ref(null)
+const stagesRef = ref(null)
 
 const updateScreenSize = () => {
     isLargeScreen.value = window.matchMedia('(min-width: 768px)').matches;
@@ -118,6 +123,16 @@ const openSettings = () => {
 
 const closeSettings = () => {
     isSettings.value = false
+    useGlobalStore().setIsEditingPlanner(false);
+}
+
+const openStages = () => {
+    isStages.value = true
+    useGlobalStore().setIsEditingPlanner(true);
+}
+
+const closeStages = () => {
+    isStages.value = false
     useGlobalStore().setIsEditingPlanner(false);
 }
 
@@ -194,6 +209,7 @@ onClickOutside(plannerEditRef, closeEditOverlay)
 onClickOutside(wildernessRef, closeWilderness)
 onClickOutside(warehouseRef, closeWarehouse)
 onClickOutside(settingsRef, closeSettings)
+onClickOutside(stagesRef, closeStages)
 
 GApiSvc.init().then(async () => {
     syncDrive();
@@ -227,6 +243,11 @@ GApiSvc.init().then(async () => {
             <button @click="openAddOverlay" class="btn btn-ghost btn-sm custom-gradient-button"><i
                     class="fa-solid fa-wand-magic-sparkles"></i> {{ $t('add-arcanist') }}</button>
             <div class="flex space-x-2">
+                <div class="tooltip" :data-tip="$t('stages')">
+                    <button @click="openStages" class="btn btn-ghost btn-sm custom-gradient-button"><i
+                            class="fa-solid fa-wand-magic-sparkles"></i><span v-show="isLargeScreen">{{ $t('stages')
+                            }}</span></button>
+                </div>
                 <div class="tooltip" :data-tip="$t('activity-settings')">
                     <button @click="openActivity" class="btn btn-ghost btn-sm custom-gradient-button rounded"><i
                             class="fa-solid fa-bolt"></i> <span v-show="isLargeScreen">{{ $t('activity')
@@ -237,7 +258,7 @@ GApiSvc.init().then(async () => {
                             class="fa-solid fa-tree"></i><span v-show="isLargeScreen">{{ $t('wilderness')
                             }}</span></button>
                 </div>
-                <div class="tooltip tooltip-left" :data-tip="$t('manage-warehouse')">
+                <div class="tooltip" :data-tip="$t('manage-warehouse')">
                     <button @click="openWarehouse" class="btn btn-ghost btn-sm custom-gradient-button"><i
                             class="fa-solid fa-box-archive"></i><span v-show="isLargeScreen">{{ $t('warehouse')
                             }}</span></button>
@@ -286,6 +307,11 @@ GApiSvc.init().then(async () => {
         <!-- Warehouse Overlay -->
         <div v-if="isWarehouse" class="overlay">
             <PlannerWarehouse ref="warehouseRef" @closeOverlay="closeWarehouse" />
+        </div>
+
+        <!-- Stages Overlay -->
+        <div v-if="isStages" class="overlay">
+            <PlannerStages ref="stagesRef" :settings="plannerStagesStore.settings" @closeOverlay="closeStages" />
         </div>
 
         <!-- Settings Overlay -->
