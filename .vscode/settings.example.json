@@ -1,0 +1,16 @@
+{
+    // To use these settings, copy them into your personal .vscode/settings.json file.
+    // That file is not committed to git, allowing for personal editor preferences.
+
+    "eslint.rules.customizations": [
+        // If you have the i18n ally extension installed, then you don't need these rules to display in vs code. The rules are added to eslint so that they show up when running `npm run lint`
+        {
+            "rule": "@intlify/vue-i18n/*",
+            "severity": "off"
+        },
+        { // handled by no-unused-vars
+            "rule": "@typescript-eslint/no-unused-vars",
+            "severity": "off"
+        }
+    ]
+}
