@@ -10,7 +10,7 @@ module.exports = {
         'plugin:vue/vue3-essential',
         '@vue/standard',
         'plugin:@intlify/vue-i18n/recommended',
-        'prettier'
+        'prettier' // Note: This is eslint-config-prettier. It disables rules that would be handled by prettier. Usually it is paired with eslint-plugin-prettier, which then applies the formatting rules.
     ],
     parserOptions: {
         parser: '@typescript-eslint/parser',
