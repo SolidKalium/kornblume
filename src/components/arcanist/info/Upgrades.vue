@@ -31,7 +31,7 @@ const props = defineProps({
                 </table>
         </div>
         <div class="p-2">
-            <p class="text-white"> Portrait </p>
+            <p class="text-white"> {{ $t('portrait') }} </p>
             <table>
                 <tr>
                     <td class="insight">Lv. 1</td>

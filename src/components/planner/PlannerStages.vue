@@ -28,7 +28,7 @@ const saveStagesSettings = () => {
         </button>
 
         <p class="text-white text-center text-lg font-bold">{{ $t('stage-settings') }}</p>
-        <p class="text-white text-center">{{ $t('select-the-highest-stages-the-planner-may-use') }}</p>
+        <p class="text-white text-center">{{ $t('select-the-highest-stage-the-planner-may-use') }}</p>
         <!-- Add settings here -->
 
         <div class="flex justify-center pt-3">

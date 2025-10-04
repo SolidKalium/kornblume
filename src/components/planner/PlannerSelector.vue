@@ -66,7 +66,7 @@ const totalMaterials = computed(() => {
                         </form>
                     </div>
                     <form method="dialog" class="modal-backdrop">
-                        <button>close</button>
+                        <button>{{$t('close')}}</button>
                     </form>
                 </dialog>
             </div>

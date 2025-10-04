@@ -496,7 +496,7 @@ const selectBannerType = (bannerType: string) => {
                 @click="triggerFileInput('Version1')"
                 :disabled="isImporting"
                 class="bg-gradient-to-br from-success to-green-600 focus:ring-2 focus:outline-none focus:ring-green-200 hover:bg-gradient-to-bl text-white/90 font-bold py-2 px-4 rounded">
-                Version 1
+                {{$t('tracker-importer-version-1')}}
               </button>
             </div>
           </form>
@@ -506,7 +506,7 @@ const selectBannerType = (bannerType: string) => {
                 @click="triggerFileInput('Version2')"
                 :disabled="isImporting"
                 class="bg-gradient-to-br from-success to-green-600 focus:ring-2 focus:outline-none focus:ring-green-200 hover:bg-gradient-to-bl text-white/90 font-bold py-2 px-4 rounded">
-                Version 2
+                {{$t('tracker-importer-version-2')}}
               </button>
             </div>
           </form>
@@ -515,13 +515,13 @@ const selectBannerType = (bannerType: string) => {
               href="https://timekeeper.top"
               target="_blank"
               class="bg-gradient-to-br from-purple-600 to-blue-500 bg-clip-padding hover:bg-gradient-to-bl focus:ring-2 focus:outline-none focus:ring-purple-200 py-2 px-4 rounded text-white">
-              timekeeper
+              {{$t('tracker-importer-website-timekeeper')}}
             </a>
           </div>
         </div>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button>{{$t('close')}}</button>
       </form>
     </dialog>
 
@@ -544,7 +544,7 @@ const selectBannerType = (bannerType: string) => {
         </button>
       </div>
       <form method="dialog" class="modal-backdrop">
-        <button>close</button>
+        <button>{{$t('close')}}</button>
       </form>
     </dialog>
 

@@ -237,7 +237,7 @@ const format = (date) => {
         :class="{ invisible: currentPage === 1 }"
         :disabled="currentPage === 1"
         @click="goToPage(currentPage - 1)">
-        Prev
+        {{ $t('prev-page-label') }}
       </button>
       <template v-for="(page, idx) in getPagination()" :key="`page-${page}-${idx}`">
         <span v-if="page === '...'" class="px-2 text-gray-400">...</span>
@@ -254,9 +254,9 @@ const format = (date) => {
         :class="{ invisible: currentPage === totalPages }"
         :disabled="currentPage === totalPages"
         @click="goToPage(currentPage + 1)">
-        Next
+        {{ $t('next-page-label') }}
       </button>
-      <span class="ml-4 text-white">Jump to page:</span>
+      <span class="ml-4 text-white">{{ $t('jump-to-page-label') }}</span>
       <input
         type="number"
         min="1"

@@ -133,7 +133,7 @@
   "login-once-per-day-for-base-190-activities": "Login once per day for a base of 190 Activity",
   "collect-once-a-day": "Collect once a day",
   "stage-settings": "Stage Settings",
-  "select-the-highest-stages-the-planner-may-use": "Select the highest stages the planner may use.",
+  "select-the-highest-stage-the-planner-may-use": "Select the highest stage the planner may use.",
   "wilderness-settings": "Wilderness Settings",
   "manage-warehouse": "Manage Warehouse",
   "settings": "Settings",
@@ -262,5 +262,18 @@
   "from-reveries": "Reveries Rewards",
   "filter": "Filter",
   "show-owned-arcanists": "Only show owned arcanists",
-  "from-insight-casket": "Got from available Insight Caskets"
+  "from-insight-casket": "Got from available Insight Caskets",
+  "tracker-importer-version-1": "Version 1",
+  "tracker-importer-version-2": "Version 2",
+  "tracker-importer-website-timekeeper": "timekeeper",
+  "sharpodonties": "Sharpodonties",
+  "dust": "Dust",
+  "sort-by-label": "Sort by:",
+  "sort-by-id-high-to-low-label": "ID (High → Low)",
+  "sort-by-name-a-to-z-label": "Name (A → Z)",
+  "next-page-label": "Next",
+  "prev-page-label": "Prev",
+  "jump-to-page-label": "Jump to page:",
+  "navbar-loading-text": "Loading...",
+  "portrait": "Portrait"
 }

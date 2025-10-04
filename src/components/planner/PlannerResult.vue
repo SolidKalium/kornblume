@@ -99,7 +99,7 @@ watchEffect(async () => {
                 </div>
             </div>
             <form method="dialog" class="modal-backdrop">
-                <button>Close</button>
+                <button>{{ $t('close') }}</button>
             </form>
         </dialog>
         <PlannerLayer v-for="(layer, index) in calculateCards" :key="index" :layer="layer" />

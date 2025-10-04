@@ -109,10 +109,10 @@ onMounted(() => {
         <div class="flex items-center gap-x-4">
           <div class="form-control">
             <label class="cursor-pointer label justify-center space-x-2">
-              <span class="label-text text-white text-md">Sort by:</span>
+              <span class="label-text text-white text-md">{{ $t('sort-by-label') }}</span>
               <select v-model="sortMode" class="select select-sm bg-gray-800 text-white">
-                <option value="id">ID (High → Low)</option>
-                <option value="name">Name (A → Z)</option>
+                <option value="id">{{ $t('sort-by-id-high-to-low-label') }}</option>
+                <option value="name">{{ $t('sort-by-name-a-to-z-label') }}</option>
               </select>
             </label>
           </div>

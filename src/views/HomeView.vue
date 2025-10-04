@@ -50,6 +50,7 @@ onClickOutside(resourcesRef, closeResources);
 <template>
     <div class="container overflow-x-hidden">
         <div class="text-center p-2 mb-1">
+            <!-- eslint-disable-next-line @intlify/vue-i18n/no-raw-text -->
             <h1 class="text-5xl lg:text-6xl font-bold text-white pt-2">Kornblume</h1>
             <p class="text-sm sm:text-lg text-gray-300">
                 {{ $t('a-toolsite-and-cornflower-worship-place-for-reverse-1999') }}
@@ -144,6 +145,7 @@ onClickOutside(resourcesRef, closeResources);
                         {{ $t('privacy-policy') }}
                     </button>
                     <dialog id="translators" class="modal">
+                        <!-- eslint-disable @intlify/vue-i18n/no-raw-text -->
                         <div class="modal-box custom-border custom-gradient-gray-blue">
                             <form method="dialog">
                                 <button
@@ -201,6 +203,7 @@ onClickOutside(resourcesRef, closeResources);
                         <form method="dialog" class="modal-backdrop">
                             <button>{{ $t('') }}</button>
                         </form>
+                        <!-- eslint-enable @intlify/vue-i18n/no-raw-text -->
                     </dialog>
                     <dialog id="privacy" class="modal">
                         <div class="modal-box custom-border custom-gradient-gray-blue">

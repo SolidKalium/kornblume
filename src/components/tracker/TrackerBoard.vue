@@ -174,7 +174,7 @@ watch(isEditing, (newVal) => {
             </div>
             <div class="number">
                 {{ pulls.filter(p => p.Rarity === 6).length > 0 ? Math.floor((pulls.length - summonSinceLastSixStar) /
-        pulls.filter(p => p.Rarity === 6).length) : 0 }}
+        pulls.filter(p => p.Rarity === 6).length) : '0' }}
             </div>
         </div>
         <div class="flex justify-between">
@@ -187,7 +187,7 @@ watch(isEditing, (newVal) => {
             </div>
             <div class="number">
                 {{ pulls.filter(p => p.Rarity === 5).length > 0 ? Math.floor(pulls.length /
-        pulls.filter(p => p.Rarity === 5).length) : 0 }}
+        pulls.filter(p => p.Rarity === 5).length) : '0' }}
             </div>
         </div>
         <div v-if="props.text == $t('summary-limited')" class="flex justify-between">
@@ -199,7 +199,7 @@ watch(isEditing, (newVal) => {
                 </i18n-t>
             </div>
             <div class="number">
-                {{ winrate ? winrate : 0 }} %
+                {{ winrate ? winrate : '0' }} %
             </div>
         </div>
         <div v-if="props.text !== $t('summary-thread')" class="flex justify-between">
@@ -210,6 +210,7 @@ watch(isEditing, (newVal) => {
                     </template>
                 </i18n-t>
             </div>
+            <!-- eslint-disable-next-line @intlify/vue-i18n/no-raw-text -->
             <div class="number">{{ summonSinceLastSixStar }} / 70</div>
         </div>
         <div class="flex flex-col justify-between opacity-95" v-if="isError">

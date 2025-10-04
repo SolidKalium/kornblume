@@ -144,7 +144,7 @@ GApiSvc.init().then(async () => {
                         {{ $t('reset-tracker') }} </button>
                 </div>
                 <form method="dialog" class="modal-backdrop">
-                    <button>close</button>
+                    <button>{{$t('close')}}</button>
                 </form>
             </dialog>
 
@@ -161,7 +161,7 @@ GApiSvc.init().then(async () => {
                         {{ $t('reset-all') }} </button>
                 </div>
                 <form method="dialog" class="modal-backdrop">
-                    <button> close </button>
+                    <button>{{$t('close')}}</button>
                 </form>
             </dialog>
         </div>
