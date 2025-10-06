@@ -134,6 +134,7 @@
   "collect-once-a-day": "Collect once a day",
   "stage-settings": "Stage Settings",
   "select-the-highest-stage-the-planner-may-use": "Select the highest stage the planner may use.",
+  "planner-no-max-stage-label": "Any",
   "wilderness-settings": "Wilderness Settings",
   "manage-warehouse": "Manage Warehouse",
   "settings": "Settings",

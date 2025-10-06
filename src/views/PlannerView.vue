@@ -6,7 +6,6 @@ import { usePlannerStore } from '@/stores/plannerStore'
 import { useActivityStore } from '@/stores/activityStore'
 import { useWildernessStore } from '@/stores/wildernessStore'
 import { usePlannerSettingsStore } from '@/stores/plannerSettingsStore'
-import { usePlannerStagesStore } from '@/stores/plannerStagesStore'
 import { useDataStore } from '@/stores/dataStore'
 import { IArcanist, ISelectedArcanist } from '@/types'
 import { formatArcanists, sortSelectedArcanists } from '@/composables/arcanists'
@@ -29,7 +28,6 @@ const activityStore = useActivityStore()
 const wildernessStore = useWildernessStore()
 const arcanistStore = useDataStore().arcanists
 const settingsStore = usePlannerSettingsStore()
-const plannerStagesStore = usePlannerStagesStore()
 const listArcanists = ref<IArcanist[]>([])
 const isLargeScreen = ref(false);
 
@@ -311,7 +309,7 @@ GApiSvc.init().then(async () => {
 
         <!-- Stages Overlay -->
         <div v-if="isStages" class="overlay">
-            <PlannerStages ref="stagesRef" :settings="plannerStagesStore.settings" @closeOverlay="closeStages" />
+            <PlannerStages ref="stagesRef" @closeOverlay="closeStages" />
         </div>
 
         <!-- Settings Overlay -->

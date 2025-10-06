@@ -1380,6 +1380,7 @@
   "Unreleased": {
     "id": 100,
     "name": "Unreleased",
+    "category": "Unreleased",
     "cost": 0,
     "drops": {
       "Serpent Scepter": 1,

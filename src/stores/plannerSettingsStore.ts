@@ -5,6 +5,13 @@ export interface IPlannerSettings {
     showOwnedArcanists: boolean;
     enableWilderness: boolean;
     enableLowRunCards: boolean;
+    /**
+     * The max story stage. Can be a stage code like '4-21H' or the string 'any'.
+     * The value 'any' is translated using the i18n key 'planner-no-max-stage-label'.
+     */
+    maxStoryStage: string;
+    maxDustStage: string;
+    maxSharpodontyStage: string;
 }
 
 interface IPlannerSettingsStore {
@@ -20,7 +27,10 @@ export const usePlannerSettingsStore = defineStore('plannerSettings', {
             showUnreleasedArcanists: false,
             showOwnedArcanists: false,
             enableWilderness: true,
-            enableLowRunCards: true
+            enableLowRunCards: true,
+            maxStoryStage: 'any',
+            maxDustStage: 'any',
+            maxSharpodontyStage: 'any'
         }
     }),
     persist: true
