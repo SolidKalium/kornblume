@@ -1250,9 +1250,59 @@
       "Trembling Tooth": 0.647
     }
   },
-  "The Poussiere VI": {
+  "LP-1": {
     "id": 86,
-    "name": "The Poussiere VI",
+    "name": "LP-1",
+    "category": "Resource",
+    "cost": 12,
+    "drops": {
+      "Dust": 4200,
+      "Sharpodonty": 120
+    }
+  },
+  "LP-2": {
+    "id": 86,
+    "name": "LP-2",
+    "category": "Resource",
+    "cost": 15,
+    "drops": {
+      "Dust": 5700,
+      "Sharpodonty": 150
+    }
+  },
+  "LP-3": {
+    "id": 86,
+    "name": "LP-3",
+    "category": "Resource",
+    "cost": 18,
+    "drops": {
+      "Dust": 7400,
+      "Sharpodonty": 180
+    }
+  },
+  "LP-4": {
+    "id": 86,
+    "name": "LP-4",
+    "category": "Resource",
+    "cost": 20,
+    "drops": {
+      "Dust": 8800,
+      "Sharpodonty": 200
+    }
+  },
+  "LP-5": {
+    "id": 86,
+    "name": "LP-5",
+    "category": "Resource",
+    "cost": 22,
+    "drops": {
+      "Dust": 10550,
+      "Sharpodonty": 220
+    }
+  },
+  "LP-6": {
+    "id": 86,
+    "name": "LP-6",
     "category": "Resource",
     "cost": 25,
     "drops": {
@@ -1260,9 +1310,54 @@
       "Sharpodonty": 250
     }
   },
-  "Mintage Aesthetics VI": {
+  "MA-1": {
     "id": 87,
-    "name": "Mintage Aesthetics VI",
+    "name": "MA-1",
+    "category": "Resource",
+    "cost": 12,
+    "drops": {
+      "Sharpodonty": 2600
+    }
+  },
+  "MA-2": {
+    "id": 87,
+    "name": "MA-2",
+    "category": "Resource",
+    "cost": 15,
+    "drops": {
+      "Sharpodonty": 3600
+    }
+  },
+  "MA-3": {
+    "id": 87,
+    "name": "MA-3",
+    "category": "Resource",
+    "cost": 18,
+    "drops": {
+      "Sharpodonty": 4750
+    }
+  },
+  "MA-4": {
+    "id": 87,
+    "name": "MA-4",
+    "category": "Resource",
+    "cost": 20,
+    "drops": {
+      "Sharpodonty": 5800
+    }
+  },
+  "MA-5": {
+    "id": 87,
+    "name": "MA-5",
+    "category": "Resource",
+    "cost": 22,
+    "drops": {
+      "Sharpodonty": 7150
+    }
+  },
+  "MA-6": {
+    "id": 87,
+    "name": "MA-6",
     "category": "Resource",
     "cost": 25,
     "drops": {
