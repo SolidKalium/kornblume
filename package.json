@@ -16,7 +16,8 @@
         "visualize:tree": "vite-bundle-visualizer --template treemap",
         "visualize:network": "vite-bundle-visualizer --template network",
         "visualize:sunburst": "vite-bundle-visualizer --template sunburst",
-        "image-process": "node scripts/images.js"
+        "image-process": "node scripts/images.js",
+        "stage-process": "node scripts/drop_rates/drop_rates.js"
     },
     "dependencies": {
         "@vuepic/vue-datepicker": "^8.2.0",
@@ -40,6 +41,7 @@
         "vue3-popper": "^1.5.0"
     },
     "devDependencies": {
+        "@fast-csv/parse": "^5.0.5",
         "@intlify/eslint-plugin-vue-i18n": "^2.0.0",
         "@intlify/unplugin-vue-i18n": "^2.0.0",
         "@types/fabric": "^5.3.7",
