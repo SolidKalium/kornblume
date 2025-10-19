@@ -27,14 +27,14 @@ Drop rate data is available on multiple different pages. But this one lists all 
   - Example: `丰收时令1`. Meaning: Bountiful Harvest, stage 1 (this is the set of stages for farming Wilderness upgrade materials)
   - Note that each level+difficulty pair may have entries for multiple versions. In this case, we want the most recent one. Multiple versions are tracked when the items being droppd are updated.
 - **cost**: The Activity cost to run the level.
-- **isValid**: *TODO*
+- **isValid**: This might be testing if an IID assumption holds. Essentially: "has the drop rate been consistent over the current window?"
 - **times**: How many times the stage was run to get the current statistics
-- **isEnough**: *TODO*. I believe this is roughly "is there enough data to trust the statistics?"
+- **isEnough**: I believe this is roughly "is there enough data to trust the statistics?"
 - **eff**: Efficiency of the stage. I haven't confirmed the exact details, but it is roughly "how close is the stage to providing maximum value per Activity spent?"
-- **边际误差**: Marginal Error. *TODO*
-- **上限期望**: Upper Expectation. *TODO*
+- **边际误差**: Marginal Error. This is likely a 95% confidence interval half width.
+- **上限期望**: Upper Expectation. This is likely the upper bound of the 95% confidence interval range.
 - Item code number columns: How many copies of the item are expected per run of the stage.
-  - The meaning of this numbers can be found on the Mapping tab. To avoid duplicating information, just check the script for the mapping.
+  - The meaning of these numbers can be found on the Mapping tab. To avoid duplicating information, just check the script for the mapping.
 
 ## Misc
 - Note: the furthest right column in Mapping is "ALL" (which happens to be 1000 when 1-indexed). If that file is ever committed, make sure it is appropriately trimmed first.
