@@ -1,6 +1,5 @@
 import { onMounted, onUnmounted, readonly, ref, watch } from 'vue';
 import { setKornblumeData } from '@/utils';
-import { gapi } from 'gapi-script'; // This is for the GDrive API client, not auth
 
 // Extend the Window interface to include our custom callback functions
 declare global {
@@ -68,7 +67,6 @@ export class GApiSvc {
                 isLoading.value = true;
 
                 const onScriptsLoaded = () => {
-                    console.log('onScriptsLoaded check. GIS:', gisScriptLoaded.value, 'GAPI:', gapiScriptLoaded.value);
                     if (gisScriptLoaded.value && gapiScriptLoaded.value) {
                         isLoading.value = false;
                         console.log('Both scripts loaded, resolving init promise.');
@@ -76,18 +74,10 @@ export class GApiSvc {
                     }
                 };
 
-                // window.onGisLoaded is not being called, so we switch to script.onload
-
-                window.onGapiLoaded = () => {
-                    console.log('GAPI script loaded.');
-                    gapiScriptLoaded.value = true;
-                    this.initApiClient();
-                    onScriptsLoaded();
-                };
-
+                // === Load the GIS script, which handles login ===
+                // NOTE: The GSI API is deprecated but the newer GIS API still uses a path that includes gsi.
                 const gisScript = this.createScriptTag('https://accounts.google.com/gsi/client');
                 gisScript.onload = () => {
-                    console.log('GIS script .onload fired.');
                     gisScriptLoaded.value = true;
                     this.initTokenClient();
                     onScriptsLoaded();
@@ -99,7 +89,13 @@ export class GApiSvc {
                 };
                 document.head.appendChild(gisScript);
 
+                // === Load the Google API script, which handles all other Google APIs ===
                 const gapiScript = this.createScriptTag('https://apis.google.com/js/api.js?onload=onGapiLoaded');
+                window.onGapiLoaded = () => {
+                    gapiScriptLoaded.value = true;
+                    this.initApiClient();
+                    onScriptsLoaded();
+                };
                 gapiScript.onerror = () => {
                     error.value = new Error('Failed to load Google API script.');
                     isLoading.value = false;
@@ -138,7 +134,7 @@ export class GApiSvc {
         });
 
         // Attempt a silent token request on load.
-        tokenClient.requestAccessToken({ prompt: 'none' });
+        // tokenClient.requestAccessToken({ prompt: '', hint: '' });
     }
 
     private static initApiClient() {
@@ -157,8 +153,18 @@ export class GApiSvc {
     static signIn() {
         if (tokenClient) {
             console.log('Requesting access token...');
+            // TODO add div?
+            // <div id="g_id_onload"
+            //     data-client_id="YOUR_GOOGLE_CLIENT_ID"
+            //     data-callback="handleCredentialResponse"
+            //     data-auto_select="true"
+            //     data-auto_prompt="false"
+            // ></div>
+            // TODO add callback in the callback
+            // TODO use ID
+            // google.accounts.id.prompt()
             // Prompt the user to select an account and grant access
-            tokenClient.requestAccessToken();
+            tokenClient.requestAccessToken( { prompt: '', hint: '' } ); // TODO use hint to avoid needing to choose account
         } else {
             console.error('GApiSvc.signIn() called but tokenClient is not initialized.');
             error.value = new Error('Google API not initialized.');
@@ -267,7 +273,7 @@ export async function syncDrive() {
         const files = await GApiSvc.getFiles();
         if (!files) return; // Early exit if there was an error getting files
 
-        const file = files.find((f: { name: string; }) => f.name === 'kornblume.json');
+        const file = files.find((f: gapi.client.drive.File) => f.name === 'kornblume.json');
         if (!file) {
             // If 'kornblume.json' doesn't exist, create it with the data from localStorage
             GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
@@ -283,7 +289,7 @@ export async function syncDrive() {
                 console.log('Drive is newer. Updating local data');
                 setKornblumeData(driveData);
                 localStorage.setItem('lastModified', driveData.lastModified);
-                setTimeout(() => window.location.reload(), 500);
+                // setTimeout(() => window.location.reload(), 500);
             } else if (localDataLastModified > driveDataLastModified) {
                 console.log('Local is newer. Updating drive data');
                 GApiSvc.updateFile(file.id, JSON.stringify(localStorage));

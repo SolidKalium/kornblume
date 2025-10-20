@@ -133,7 +133,7 @@ export function importKornblumeData (jsonFile) {
 
             console.log('Import successful!');
             // Ensure to reload eventually
-            setTimeout(() => window.location.reload());
+            // setTimeout(() => window.location.reload());
         } catch (error) {
             console.error('Error importing data:', error);
         }
@@ -145,5 +145,5 @@ export function importKornblumeData (jsonFile) {
 export function resetKornblumeData () {
     localStorageKeys.forEach((localStorageKey) => localStorage.removeItem(localStorageKey))
     // Ensure to reload eventually
-    setTimeout(() => window.location.reload());
+    // setTimeout(() => window.location.reload());
 }

@@ -52,7 +52,7 @@ const isEqualPulls = (pulls1, pulls2) => {
 
 const resetTracker = () => {
   usePullsRecordStore().reset();
-  window.location.reload();
+  // window.location.reload();
 };
 
 const sortedPulls = computed(() => {

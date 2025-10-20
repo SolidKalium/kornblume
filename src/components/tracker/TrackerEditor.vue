@@ -125,11 +125,11 @@ const savePulls = () => {
   });
 
   pullsRecordStore.updatePullsRecord(pullsToSave);
-  setTimeout(() => window.location.reload());
+  // setTimeout(() => window.location.reload());
 };
 
 const reload = () => {
-  window.location.reload();
+  // window.location.reload();
 };
 
 const format = (date) => {

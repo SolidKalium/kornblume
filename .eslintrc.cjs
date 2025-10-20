@@ -22,6 +22,7 @@ module.exports = {
         indent: 'off'
     },
     globals: {
-        google: "readonly"
+        google: "readonly",
+        gapi: "readonly"
     }
 };

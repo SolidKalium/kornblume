@@ -45,7 +45,7 @@ const resetStores = () => {
 
 const resetTracker = () => {
     usePullsRecordStore().reset();
-    window.location.reload();
+    // window.location.reload();
 };
 
 const loginGoogleDrive = () => {
@@ -60,7 +60,7 @@ watchEffect(async () => {
         const files = await GApiSvc.getFiles();
         if (!files) return;
 
-        const file = files.find((f: { name: string; }) => f.name === 'kornblume.json');
+        const file = files.find((f: gapi.client.drive.File) => f.name === 'kornblume.json');
 
         if (!file) {
             await GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
@@ -70,7 +70,7 @@ watchEffect(async () => {
             const fileData = await GApiSvc.downloadFile(file.id);
             if (fileData) {
                 setKornblumeData(fileData);
-                setTimeout(() => window.location.reload(), 500);
+                // setTimeout(() => window.location.reload(), 500);
             }
         }
     }
