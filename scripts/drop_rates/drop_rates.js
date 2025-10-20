@@ -131,7 +131,7 @@ const getStageFields = (stageName) => {
 };
 
 const transformRow = (row) => {
-    // I'm not sure why the stage column is named 46. It might not be reliable.
+    // I'm not sure why the stage column is named 46 in margin of error. It might not be reliable.
     if (!row || !row.name || row.name === '0') {
         return null;
     }
@@ -157,6 +157,7 @@ const transformRow = (row) => {
         }
     }
 
+    // TOOD put this in a resource sub-object
     for (const [csvColumn, jsonColumn] of Object.entries(resourceColumnNames)) {
         const strValue = row[csvColumn];
         if (!strValue) {
