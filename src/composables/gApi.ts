@@ -1,10 +1,9 @@
-import { onMounted, onUnmounted, readonly, ref, watch } from 'vue';
+import { onMounted, onUnmounted, readonly, ref } from 'vue';
 import { setKornblumeData } from '@/utils';
 
-// Extend the Window interface to include our custom callback functions
+// Extend the Window interface to include our custom callback function
 declare global {
     interface Window {
-        onGisLoaded: () => void;
         onGapiLoaded: () => void;
     }
 }
@@ -19,20 +18,15 @@ const subscriberCount = ref(0);
 let tokenClient: google.accounts.oauth2.TokenClient | null = null;
 const accessToken = ref<Omit<google.accounts.oauth2.TokenResponse, 'error' | 'error_description' | 'error_uri'> | null>(null);
 
-// Watch for components using the composable and load scripts when needed
-watch(
-    () => subscriberCount.value,
-    (newCount) => {
-        if (newCount > 0) {
-            GApiSvc.init();
-        }
-    }
-);
 
 // === Composable for Vue components ===
-export function useGapi() {
+// Automatically loads scripts when the composable is instantiated.
+export function useGoogleAPIs() {
     onMounted(() => {
         subscriberCount.value++;
+        if (subscriberCount.value > 0) {
+            GApiSvc.init();
+        }
     });
     onUnmounted(() => {
         subscriberCount.value--;

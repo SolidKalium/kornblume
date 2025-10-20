@@ -2,14 +2,14 @@
 import { ref, watchEffect } from 'vue';
 import { exportKornblumeData, importKornblumeData, resetKornblumeData, setKornblumeData } from '@/utils';
 import { usePullsRecordStore } from '@/stores/pullsRecordStore';
-import { GApiSvc, useGapi, syncDrive } from '@/composables/gApi';
+import { GApiSvc, useGoogleAPIs, syncDrive } from '@/composables/gApi';
 
 const fileInput = ref<HTMLElement | null>(null);
 const showEmail = ref(false);
 const isGapiInitialized = ref(false); // This will be true only when the GApiSvc is fully ready.
 
 // Use the composable to get reactive, shared state, but manage readiness locally.
-const { isSignedIn } = useGapi();
+const { isSignedIn } = useGoogleAPIs();
 
 // This effect runs when the component mounts and whenever its dependencies change.
 // We wait for the API to be ready, then check the sign-in status and sync.
@@ -50,7 +50,7 @@ const resetTracker = () => {
 
 const loginGoogleDrive = () => {
     // Just trigger the sign-in flow. The reactive `isSignedIn` ref
-    // from useGapi() will update automatically on success.
+    // from useGoogleAPIs() will update automatically on success.
     GApiSvc.signIn();
 };
 
