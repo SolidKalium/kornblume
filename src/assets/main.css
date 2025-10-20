@@ -101,6 +101,15 @@
     @apply btn btn-info btn-sm hover:bg-gradient-to-bl bg-gradient-to-br from-info to-blue-400 text-white/90 py-1 px-2 rounded-xl
 }
 
+.red-button:disabled,
+.green-button:disabled,
+.blue-button:disabled,
+.red-button-small:disabled,
+.green-button-small:disabled,
+.blue-button-small:disabled {
+    @apply opacity-50 text-gray-200 pointer-events-none;
+}
+
 @keyframes fadeIn {
     0% {
         opacity: 0;

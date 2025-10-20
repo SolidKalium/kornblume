@@ -1,69 +1,85 @@
 <script setup lang="ts" name="ProfileView">
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue';
 import { exportKornblumeData, importKornblumeData, resetKornblumeData, setKornblumeData } from '@/utils';
 import { usePullsRecordStore } from '@/stores/pullsRecordStore';
-import { GApiSvc, syncDrive } from '@/composables/gApi';
+import { GApiSvc, useGapi, syncDrive } from '@/composables/gApi';
 
-const fileInput = ref<HTMLElement>(null!);
-const isGapiReady = ref(false);
-const isSignedIn = ref(false);
+const fileInput = ref<HTMLElement | null>(null);
 const showEmail = ref(false);
+const isGapiInitialized = ref(false); // This will be true only when the GApiSvc is fully ready.
+
+// Use the composable to get reactive, shared state, but manage readiness locally.
+const { isSignedIn } = useGapi();
+
+// This effect runs when the component mounts and whenever its dependencies change.
+// We wait for the API to be ready, then check the sign-in status and sync.
+GApiSvc.init().then(() => {
+    isGapiInitialized.value = true;
+    // We can sync drive here if the user is already signed in from a previous session.
+    if (isSignedIn.value) {
+        syncDrive();
+    }
+}).catch(err => {
+    console.error('GApiSvc init failed:', err);
+});
 
 const exportStores = () => {
-    exportKornblumeData()
-}
+    exportKornblumeData();
+};
 
 const triggerFileInput = () => {
-    // Trigger the file input programmatically
-    fileInput.value.click()
-}
+    fileInput.value?.click();
+};
 
-const importStores = (event) => {
-    const file = event.target.files[0]
+const importStores = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
     if (file) {
-        importKornblumeData(file)
+        importKornblumeData(file);
     }
-}
+};
 
 const resetStores = () => {
-    resetKornblumeData()
-}
+    resetKornblumeData();
+};
 
 const resetTracker = () => {
-    usePullsRecordStore().reset()
-    window.location.reload()
-}
+    usePullsRecordStore().reset();
+    window.location.reload();
+};
 
-const loginGoogleDrive = async () => {
-    // Login to Google Drive
-    await GApiSvc.signIn();
-    isSignedIn.value = true;
-    const files = await GApiSvc.getFiles();
-    const file = files.find((file: { name: string; }) => file.name === 'kornblume.json');
+const loginGoogleDrive = () => {
+    // Just trigger the sign-in flow. The reactive `isSignedIn` ref
+    // from useGapi() will update automatically on success.
+    GApiSvc.signIn();
+};
 
-    if (!file) {
-        // If 'kornblume.json' doesn't exist, create it with the data from localStorage
-        await GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
-        console.log('kornblume.json created');
-    } else {
-        // If 'kornblume.json' does exist, download it
-        console.log('kornblume.json exists. importing data...')
-        const fileData = await GApiSvc.downloadFile(file.id);
-        setKornblumeData(fileData);
-        setTimeout(() => window.location.reload());
+// The sync logic that should run once the user signs in.
+watchEffect(async () => {
+    if (isSignedIn.value) {
+        const files = await GApiSvc.getFiles();
+        if (!files) return;
+
+        const file = files.find((f: { name: string; }) => f.name === 'kornblume.json');
+
+        if (!file) {
+            await GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
+            console.log('kornblume.json created');
+        } else if (file.id) {
+            console.log('kornblume.json exists. importing data...');
+            const fileData = await GApiSvc.downloadFile(file.id);
+            if (fileData) {
+                setKornblumeData(fileData);
+                setTimeout(() => window.location.reload(), 500);
+            }
+        }
     }
-}
+});
 
 const signOutGoogleDrive = () => {
     GApiSvc.signOut();
-    isSignedIn.value = false;
-}
-
-GApiSvc.init().then(async () => {
-    isGapiReady.value = true;
-    isSignedIn.value = await GApiSvc.isSignedIn();
-    syncDrive();
-});
+    // No need to set isSignedIn.value = false, it's handled reactively.
+};
 
 </script>
 
@@ -100,10 +116,10 @@ GApiSvc.init().then(async () => {
             </div> -->
 
             <div class="flex justify-center items-center p-2 space-x-5">
-                <button :disabled="!isGapiReady" v-if="!isSignedIn" class="green-button" @click="loginGoogleDrive">{{
+                <button :disabled="!isGapiInitialized" v-if="!isSignedIn" class="green-button" @click="loginGoogleDrive">{{
                 $t('login-google-drive') }} <i class="fa-brands fa-google-drive"></i> </button>
                 <div class="flex flex-col justify-center items-center" v-else>
-                    <button :disabled="!isGapiReady" class="blue-button" @click="signOutGoogleDrive">{{
+                    <button :disabled="!isGapiInitialized" class="blue-button" @click="signOutGoogleDrive">{{
                 $t('sign-out-google-drive') }} <i class="fa-brands fa-google-drive"></i>
                     </button>
                     <div v-if="showEmail" class="text-white opacity-90 mt-2">
