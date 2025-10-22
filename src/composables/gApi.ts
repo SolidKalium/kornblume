@@ -1,10 +1,26 @@
 import { onMounted, onUnmounted, readonly, ref } from 'vue';
+import { useUserStore } from '@/stores/userStore';
 import { setKornblumeData } from '@/utils';
 
 // Extend the Window interface to include our custom callback function
 declare global {
     interface Window {
         onGapiLoaded: () => void;
+    }
+}
+
+// Helper to decode JWT
+function decodeJwt(token: string) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error('Error decoding JWT', e);
+        return null;
     }
 }
 
@@ -69,11 +85,11 @@ export class GApiSvc {
                 };
 
                 // === Load the GIS script, which handles login ===
-                // NOTE: The GSI API is deprecated but the newer GIS API still uses a path that includes gsi.
                 const gisScript = this.createScriptTag('https://accounts.google.com/gsi/client');
                 gisScript.onload = () => {
                     gisScriptLoaded.value = true;
-                    this.initTokenClient();
+                    this.initIdClient(); // For AuthN
+                    this.initTokenClient(); // For AuthZ
                     onScriptsLoaded();
                 };
                 gisScript.onerror = () => {
@@ -101,7 +117,31 @@ export class GApiSvc {
         return this.initializationPromise;
     }
 
-    private static initTokenClient() {
+    private static initIdClient() { // For AuthN
+        if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+            console.error('Google Client ID not configured.');
+            return;
+        }
+        google.accounts.id.initialize({ // This should only be called once per page load.
+            client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+            use_fedcm_for_prompt: true,
+            use_fedcm_for_button: true,
+            auto_select: true,
+            cancel_on_tap_outside: true,
+            // login_hint: '', // TODO use this if user is already logged in
+            callback: (response) => {
+                const userStore = useUserStore();
+                if (response.credential) {
+                    const userData = decodeJwt(response.credential);
+                    userStore.setUser(userData);
+                } else {
+                    userStore.clearUser();
+                }
+            }
+        });
+    }
+
+    private static initTokenClient() { // For AuthZ
         if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
             console.error('Google Client ID not configured.');
             return;
@@ -126,9 +166,6 @@ export class GApiSvc {
                 }
             },
         });
-
-        // Attempt a silent token request on load.
-        // tokenClient.requestAccessToken({ prompt: '', hint: '' });
     }
 
     private static initApiClient() {
@@ -145,27 +182,13 @@ export class GApiSvc {
     }
 
     static signIn() {
-        if (tokenClient) {
-            console.log('Requesting access token...');
-            // TODO add div?
-            // <div id="g_id_onload"
-            //     data-client_id="YOUR_GOOGLE_CLIENT_ID"
-            //     data-callback="handleCredentialResponse"
-            //     data-auto_select="true"
-            //     data-auto_prompt="false"
-            // ></div>
-            // TODO add callback in the callback
-            // TODO use ID
-            // google.accounts.id.prompt()
-            // Prompt the user to select an account and grant access
-            tokenClient.requestAccessToken( { prompt: '', hint: '' } ); // TODO use hint to avoid needing to choose account
-        } else {
-            console.error('GApiSvc.signIn() called but tokenClient is not initialized.');
-            error.value = new Error('Google API not initialized.');
-        }
+        google.accounts.id.prompt();
     }
 
     static signOut() {
+        const userStore = useUserStore();
+        google.accounts.id.disableAutoSelect();
+        userStore.clearUser();
         if (accessToken.value) {
             google.accounts.oauth2.revoke(accessToken.value.access_token, () => {
                 accessToken.value = null;
@@ -175,14 +198,22 @@ export class GApiSvc {
     }
 
     static isSignedIn() {
-        return !!accessToken.value;
+        const userStore = useUserStore();
+        return !!userStore.sub;
     }
 
     static getEmail() {
-        // Note: GIS doesn't provide a direct profile API like the old GSI.
-        // To get user info, you'd typically decode the ID token (if using `id.initialize`)
-        // or call the People API. For now, this is out of scope of the direct migration.
-        return '';
+        const userStore = useUserStore();
+        return userStore.email;
+    }
+
+    static requestDriveAccess(){
+        const userStore = useUserStore();
+        if (!this.isSignedIn()) {
+            console.error('User is not signed in. Cannot request Drive access.');
+            return;
+         }
+        tokenClient?.requestAccessToken({ prompt: '', hint: userStore.email || '' });
     }
 
     static async getFiles() {
