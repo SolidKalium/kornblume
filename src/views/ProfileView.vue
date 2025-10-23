@@ -1,8 +1,8 @@
 <script setup lang="ts" name="ProfileView">
-import { ref, watchEffect } from 'vue';
-import { exportKornblumeData, importKornblumeData, resetKornblumeData, setKornblumeData } from '@/utils';
+import { ref, watch } from 'vue';
+import { exportKornblumeData, importKornblumeData, resetKornblumeData } from '@/utils';
 import { usePullsRecordStore } from '@/stores/pullsRecordStore';
-import { GApiSvc, useGoogleAPIs, syncDrive } from '@/composables/gApi';
+import { GApiSvc, useGoogleAPIs, syncDrive, syncDriveOnLogin } from '@/composables/gApi';
 
 const fileInput = ref<HTMLElement | null>(null);
 const showEmail = ref(false);
@@ -54,27 +54,16 @@ const loginGoogleDrive = () => {
     GApiSvc.signIn();
 };
 
-// The sync logic that should run once the user signs in.
-watchEffect(async () => {
-    if (isSignedIn.value) {
-        const files = await GApiSvc.getFiles();
-        if (!files) return;
-
-        const file = files.find((f: gapi.client.drive.File) => f.name === 'kornblume.json');
-
-        if (!file) {
-            await GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
-            console.log('kornblume.json created');
-        } else if (file.id) {
-            console.log('kornblume.json exists. importing data...');
-            const fileData = await GApiSvc.downloadFile(file.id);
-            if (fileData) {
-                setKornblumeData(fileData);
-                // setTimeout(() => window.location.reload(), 500);
-            }
+// Only run syncDriveOnLogin when the user transitions from signed-out -> signed-in.
+watch(
+    () => isSignedIn.value,
+    (newVal, oldVal) => {
+        if (!oldVal && newVal) {
+            // actual login event
+            syncDriveOnLogin();
         }
     }
-});
+);
 
 const signOutGoogleDrive = () => {
     GApiSvc.signOut();

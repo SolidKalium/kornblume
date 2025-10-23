@@ -1,6 +1,6 @@
-import { onMounted, onUnmounted, readonly, ref } from 'vue';
+import { computed, onMounted, onUnmounted, readonly, ref } from 'vue';
 import { useUserStore } from '@/stores/userStore';
-import { setKornblumeData } from '@/utils';
+import { setKornblumeData, getKornblumeData } from '@/utils';
 
 // Extend the Window interface to include our custom callback function
 declare global {
@@ -32,12 +32,22 @@ const error = ref<Error | null>(null);
 const subscriberCount = ref(0);
 
 let tokenClient: google.accounts.oauth2.TokenClient | null = null;
-const accessToken = ref<Omit<google.accounts.oauth2.TokenResponse, 'error' | 'error_description' | 'error_uri'> | null>(null);
+
+// StoredToken augments the OAuth TokenResponse with an absolute expiry time
+type StoredToken = Omit<google.accounts.oauth2.TokenResponse, 'error' | 'error_description' | 'error_uri'> & {
+    expires_at: number; // ms since epoch
+};
+
+const accessToken = ref<StoredToken | null>(null);
 
 
 // === Composable for Vue components ===
 // Automatically loads scripts when the composable is instantiated.
 export function useGoogleAPIs() {
+    const userStore = useUserStore();
+    const isSignedIn = computed(() => !!userStore.sub);
+    const hasDriveConsent = computed(() => userStore.hasDriveConsent);
+
     onMounted(() => {
         subscriberCount.value++;
         if (subscriberCount.value > 0) {
@@ -47,10 +57,12 @@ export function useGoogleAPIs() {
     onUnmounted(() => {
         subscriberCount.value--;
     });
+
     return {
         scriptLoaded: readonly(gapiScriptLoaded),
         scriptLoadError: readonly(error),
-        isSignedIn: readonly(accessToken)
+        isSignedIn, // Reflects AuthN status
+        hasDriveConsent, // Reflects persistent AuthZ status
     };
 }
 
@@ -79,7 +91,7 @@ export class GApiSvc {
                 const onScriptsLoaded = () => {
                     if (gisScriptLoaded.value && gapiScriptLoaded.value) {
                         isLoading.value = false;
-                        console.log('Both scripts loaded, resolving init promise.');
+                        // console.log('Both scripts loaded, resolving init promise.');
                         resolve();
                     }
                 };
@@ -132,9 +144,12 @@ export class GApiSvc {
             callback: (response) => {
                 const userStore = useUserStore();
                 if (response.credential) {
+                    console.log('Login request successful.');
                     const userData = decodeJwt(response.credential);
                     userStore.setUser(userData);
+                    GApiSvc.requestDriveAccess(); // Chain into AuthZ on login. Might not work on auto-login
                 } else {
+                    console.log('Login request failed.');
                     userStore.clearUser();
                 }
             }
@@ -150,7 +165,8 @@ export class GApiSvc {
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
             // Request permission only for files created or opened by the app.
             scope: 'https://www.googleapis.com/auth/drive.file',
-            callback: (response) => {
+            callback: (response: google.accounts.oauth2.TokenResponse) => {
+                const userStore = useUserStore();
                 if (response.error) {
                     // Don't treat silent sign-in failures as a critical error.
                     // These are expected if the user is not logged in or has not granted consent.
@@ -161,14 +177,30 @@ export class GApiSvc {
                     accessToken.value = null;
                 } else {
                     error.value = null; // Clear any previous errors on success.
-                    accessToken.value = response;
-                    gapi.client.setToken(response);
+                    // Calculate absolute expiry time from expires_in (seconds).
+                    const bufferDuration = 2 * 60 * 1000; // 2 minutes
+                    const expiresIn = Number(response.expires_in) || 0;
+                    const expiresAt = expiresIn ?
+                        Date.now() + expiresIn * 1000 - bufferDuration :
+                        0;
+                    // Build stored token by copying returned fields and adding expires_at.
+                    const stored = Object.assign({}, response, { expires_at: expiresAt }) as StoredToken;
+                    accessToken.value = stored;
+                    try {
+                        gapi.client.setToken(response as google.accounts.oauth2.TokenResponse);
+                    } catch (e) {
+                        // Don't break if gapi isn't available yet; surface the error.
+                        console.warn('gapi.client.setToken failed', e);
+                    }
+                    userStore.setHasDriveConsent(true);
                 }
             },
         });
     }
 
-    private static initApiClient() {
+    private static initApiClient() { // For Drive access
+        // Creates gapi.client.drive from the discovery docs
+        // The discovery doc doesn't require an API to access, but using a key is still recommended.
          gapi.load('client', () => {
             gapi.client.init({
                 apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
@@ -182,6 +214,7 @@ export class GApiSvc {
     }
 
     static signIn() {
+        // All configuration was done earlier in initApiClient
         google.accounts.id.prompt();
     }
 
@@ -207,13 +240,18 @@ export class GApiSvc {
         return userStore.email;
     }
 
-    static requestDriveAccess(){
+    static requestDriveAccess() {
         const userStore = useUserStore();
         if (!this.isSignedIn()) {
             console.error('User is not signed in. Cannot request Drive access.');
             return;
-         }
-        tokenClient?.requestAccessToken({ prompt: '', hint: userStore.email || '' });
+        }
+        tokenClient?.requestAccessToken({ prompt: '', hint: userStore.sub || '' });
+    }
+
+    static hasDriveConsent() {
+        const userStore = useUserStore();
+        return !!userStore.hasDriveConsent;
     }
 
     static async getFiles() {
@@ -294,18 +332,24 @@ export class GApiSvc {
 }
 
 export async function syncDrive() {
-    if (GApiSvc.isSignedIn()) {
+    if (GApiSvc.hasDriveConsent()) {
         const files = await GApiSvc.getFiles();
-        if (!files) return; // Early exit if there was an error getting files
+        if (!files) {
+            console.warn('No files returned by Drive');
+            return;
+        }
 
         const file = files.find((f: gapi.client.drive.File) => f.name === 'kornblume.json');
         if (!file) {
-            // If 'kornblume.json' doesn't exist, create it with the data from localStorage
-            GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
+            console.log('Creating initial kornblume.json in Drive from localStorage data')
+            GApiSvc.createFile('kornblume.json', JSON.stringify(getKornblumeData()));
         } else if (file.id) {
             // If 'kornblume.json' does exist, download it
             const driveData = await GApiSvc.downloadFile(file.id);
-            if (!driveData) return; // Early exit on download error
+            if (!driveData) {
+                console.warn('Error downloading file from Drive');
+                return;
+            }
 
             const localDataLastModified = new Date(localStorage.getItem('lastModified') ?? '0');
             const driveDataLastModified = new Date(driveData.lastModified);
@@ -315,9 +359,35 @@ export async function syncDrive() {
                 setKornblumeData(driveData);
                 localStorage.setItem('lastModified', driveData.lastModified);
                 // setTimeout(() => window.location.reload(), 500);
-            } else if (localDataLastModified > driveDataLastModified) {
+            } else if ((localDataLastModified > driveDataLastModified) || !driveData.lastModified) {
                 console.log('Local is newer. Updating drive data');
-                GApiSvc.updateFile(file.id, JSON.stringify(localStorage));
+                GApiSvc.updateFile(file.id, JSON.stringify(getKornblumeData()));
+            } else {
+                console.log('Local and Drive data have the same date. No sync needed.');
+            }
+        } else {
+            console.warn('Drive file found but not processed', file)
+        }
+    }
+}
+
+// This sync won't overwrite the existing remote data.
+export async function syncDriveOnLogin() {
+    if (GApiSvc.hasDriveConsent()) {
+        const files = await GApiSvc.getFiles();
+        if (!files) return;
+
+        const file = files.find((f: gapi.client.drive.File) => f.name === 'kornblume.json');
+
+        if (!file) {
+            await GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
+            console.log('kornblume.json created');
+        } else if (file.id) {
+            console.log('kornblume.json exists. importing data...');
+            const fileData = await GApiSvc.downloadFile(file.id);
+            if (fileData) {
+                setKornblumeData(fileData);
+                // setTimeout(() => window.location.reload(), 500);
             }
         }
     }

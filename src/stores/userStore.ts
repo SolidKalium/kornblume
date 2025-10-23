@@ -8,6 +8,7 @@ export const useUserStore = defineStore(
     const sub = ref<string | null>(null)
     const name = ref<string | null>(null)
     const picture = ref<string | null>(null)
+    const hasDriveConsent = ref<boolean>(false)
 
     function setUser(userData: { email: string; sub: string; name: string; picture: string }) {
       email.value = userData.email
@@ -16,11 +17,16 @@ export const useUserStore = defineStore(
       picture.value = userData.picture
     }
 
+    function setHasDriveConsent(value: boolean) {
+      hasDriveConsent.value = value
+    }
+
     function clearUser() {
       email.value = null
       sub.value = null
       name.value = null
       picture.value = null
+      hasDriveConsent.value = false
     }
 
     return {
@@ -28,7 +34,9 @@ export const useUserStore = defineStore(
       sub,
       name,
       picture,
+      hasDriveConsent,
       setUser,
+      setHasDriveConsent,
       clearUser
     }
   },

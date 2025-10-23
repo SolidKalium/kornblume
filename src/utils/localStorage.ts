@@ -14,7 +14,8 @@ const localStorageKeys = [
     'pulls',
     'activity',
     'changelogs',
-    'locale'
+    'locale',
+    'lastModified' // Needed when syncing
 ];
 
 export function setGlobalLastModifiedTimestamp () {
