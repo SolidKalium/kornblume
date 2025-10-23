@@ -9,7 +9,7 @@ const showEmail = ref(false);
 const isGapiInitialized = ref(false); // This will be true only when the GApiSvc is fully ready.
 
 // Use the composable to get reactive, shared state, but manage readiness locally.
-const { isSignedIn } = useGoogleAPIs();
+const { isSignedIn, hasDriveConsent } = useGoogleAPIs();
 
 // This effect runs when the component mounts and whenever its dependencies change.
 // We wait for the API to be ready, then check the sign-in status and sync.
@@ -110,17 +110,22 @@ const signOutGoogleDrive = () => {
                 <button :disabled="!isGapiInitialized" v-if="!isSignedIn" class="green-button" @click="loginGoogleDrive">{{
                 $t('login-google-drive') }} <i class="fa-brands fa-google-drive"></i> </button>
                 <div class="flex flex-col justify-center items-center" v-else>
-                    <button :disabled="!isGapiInitialized" class="blue-button" @click="signOutGoogleDrive">{{
-                $t('sign-out-google-drive') }} <i class="fa-brands fa-google-drive"></i>
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button :disabled="!isGapiInitialized" class="blue-button" @click="signOutGoogleDrive">{{
+                            $t('sign-out-google-drive') }} <i class="fa-brands fa-google-drive"></i>
+                        </button>
+                        <button v-if="!hasDriveConsent" :disabled="!isGapiInitialized" class="yellow-button" @click="GApiSvc.requestDriveAccess()">
+                            {{ $t('grant-drive-access') }} <i class="fa-brands fa-google-drive"></i>
+                        </button>
+                    </div>
                     <div v-if="showEmail" class="text-white opacity-90 mt-2">
                         <p>{{ GApiSvc.getEmail() }}</p>
                     </div>
                     <button v-else @click="showEmail = true" class="btn btn-ghost btn-sm mt-2 text-white/90 opacity-90">
                         {{ $t('click-to-show-email') }} </button>
                     <div class="flex space-x-1 items-center">
-                        <p class="text-success text-base">•</p>
-                        <p class="text-white text-sm opacity-90">{{ $t('synced') }}</p>
+                        <p :class="hasDriveConsent ? 'text-success' : 'text-yellow-400'" class="text-base">•</p>
+                        <p class="text-white text-sm opacity-90">{{ hasDriveConsent ? $t('synced') : $t('not-synced-drive-access-required') }}</p>
                     </div>
                 </div>
             </div>

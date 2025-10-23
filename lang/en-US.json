@@ -261,5 +261,7 @@
   "from-reveries": "Reveries Rewards",
   "filter": "Filter",
   "show-owned-arcanists": "Only show owned arcanists",
-  "from-insight-casket": "Got from available Insight Caskets"
+  "from-insight-casket": "Got from available Insight Caskets",
+  "grant-drive-access": "Grant Drive access",
+  "not-synced-drive-access-required": "Not synced: Drive access required"
 }
