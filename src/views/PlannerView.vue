@@ -195,9 +195,11 @@ onClickOutside(wildernessRef, closeWilderness)
 onClickOutside(warehouseRef, closeWarehouse)
 onClickOutside(settingsRef, closeSettings)
 
-GApiSvc.init().then(async () => {
-    syncDrive();
-});
+if (GApiSvc.isConfigured()) {
+    GApiSvc.init().then(async () => {
+        syncDrive();
+    });
+}
 </script>
 
 <template>

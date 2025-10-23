@@ -68,6 +68,10 @@ export function useGoogleAPIs() {
 
 // === Service Class for API interactions ===
 export class GApiSvc {
+    public static isConfigured() {
+        return !!import.meta.env.VITE_GOOGLE_CLIENT_ID && !!import.meta.env.VITE_GOOGLE_API_KEY;
+    }
+
     private static initializationPromise: Promise<void> | null = null;
 
     private static createScriptTag(url: string) {
@@ -84,6 +88,11 @@ export class GApiSvc {
                 // If scripts are already loaded, resolve immediately.
                 if (gisScriptLoaded.value && gapiScriptLoaded.value) {
                     return resolve();
+                }
+                if (!import.meta.env.VITE_GOOGLE_CLIENT_ID || !import.meta.env.VITE_GOOGLE_API_KEY) {
+                    error.value = new Error('Google Client ID and/or API key not configured.');
+                    isLoading.value = false;
+                    reject(error);
                 }
 
                 isLoading.value = true;
@@ -332,6 +341,9 @@ export class GApiSvc {
 }
 
 export async function syncDrive() {
+    if (!GApiSvc.isConfigured()){
+        return;
+    }
     if (GApiSvc.hasDriveConsent()) {
         const files = await GApiSvc.getFiles();
         if (!files) {

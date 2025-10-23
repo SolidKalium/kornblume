@@ -418,9 +418,11 @@ onMounted(() => {
   }
 });
 
-GApiSvc.init().then(async () => {
-  syncDrive();
-});
+if (GApiSvc.isConfigured()) {
+  GApiSvc.init().then(async () => {
+    syncDrive();
+  });
+}
 
 const selectBannerType = (bannerType: string) => {
   selectedBannerType.value = bannerType;

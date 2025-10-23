@@ -13,15 +13,17 @@ const { isSignedIn } = useGoogleAPIs();
 
 // This effect runs when the component mounts and whenever its dependencies change.
 // We wait for the API to be ready, then check the sign-in status and sync.
-GApiSvc.init().then(() => {
-    isGapiInitialized.value = true;
-    // We can sync drive here if the user is already signed in from a previous session.
-    if (isSignedIn.value) {
-        syncDrive();
-    }
-}).catch(err => {
-    console.error('GApiSvc init failed:', err);
-});
+if (GApiSvc.isConfigured()) {
+    GApiSvc.init().then(() => {
+        isGapiInitialized.value = true;
+        // We can sync drive here if the user is already signed in from a previous session.
+        if (isSignedIn.value) {
+            syncDrive();
+        }
+    }).catch(err => {
+        console.error('GApiSvc init failed:', err);
+    });
+}
 
 const exportStores = () => {
     exportKornblumeData();
@@ -88,7 +90,7 @@ const signOutGoogleDrive = () => {
             </div>
         </div>
 
-        <div class="pb-6">
+        <div v-if="GApiSvc.isConfigured()" class="pb-6">
             <h2 class="text-2xl text-white font-bold mb-2 lg:mb-4"> {{ $t('google-drive-save') }} </h2>
             <p class="text-white"> {{
                 $t('you-can-use-google-drive-and-let-kornblume-save-and-sync-data-between-devices-we-only-read-and-write-files-that-kornblume-created')
@@ -122,6 +124,12 @@ const signOutGoogleDrive = () => {
                     </div>
                 </div>
             </div>
+        </div>
+        <div v-else class="pb-10">
+            <h2 class="text-2xl text-white font-bold mb-2 lg:mb-4"> {{ $t('google-drive-save') }} </h2>
+            <p class="text-white"> {{
+                $t('google-drive-not-configured')
+            }}</p>
         </div>
 
         <div class="pb-6">

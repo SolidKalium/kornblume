@@ -226,6 +226,7 @@
   "sign-out-google-drive": "Sign out of Google Drive",
   "click-to-show-email": "Click to show email",
   "synced": "Synced",
+  "google-drive-not-configured": "Google Drive is not currently configured.",
   "banner": "Type",
   "add-pull": "Add Pull",
   "cancel": "Cancel",
