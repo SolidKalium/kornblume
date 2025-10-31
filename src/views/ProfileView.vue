@@ -53,7 +53,7 @@ const resetTracker = () => {
 const loginGoogleDrive = () => {
     // Just trigger the sign-in flow. The reactive `isSignedIn` ref
     // from useGoogleAPIs() will update automatically on success.
-    GApiSvc.signIn();
+    GApiSvc.signIn(true);
 };
 
 // Only run syncDriveOnLogin when the user transitions from signed-out -> signed-in.
@@ -114,7 +114,7 @@ const signOutGoogleDrive = () => {
                         <button :disabled="!isGapiInitialized" class="blue-button" @click="signOutGoogleDrive">{{
                             $t('sign-out-google-drive') }} <i class="fa-brands fa-google-drive"></i>
                         </button>
-                        <button v-if="!hasDriveConsent" :disabled="!isGapiInitialized" class="yellow-button" @click="GApiSvc.requestDriveAccess()">
+                        <button v-if="!hasDriveConsent" :disabled="!isGapiInitialized" class="green-button" @click="GApiSvc.requestDriveAccess()">
                             {{ $t('grant-drive-access') }} <i class="fa-brands fa-google-drive"></i>
                         </button>
                     </div>

@@ -143,20 +143,27 @@ export class GApiSvc {
             console.error('Google Client ID not configured.');
             return;
         }
+        const userStore = useUserStore();
+        const autoSelect = !!userStore.sub;
+        console.log('autoSelect', autoSelect);
+
         google.accounts.id.initialize({ // This should only be called once per page load.
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-            use_fedcm_for_prompt: true,
-            use_fedcm_for_button: true,
-            auto_select: true,
+            // use_fedcm_for_prompt: true,
+            // use_fedcm_for_button: true,
+            auto_select: autoSelect,
             cancel_on_tap_outside: true,
-            // login_hint: '', // TODO use this if user is already logged in
+            // Only include login_hint when we actually have one; empty string can still trigger auto-selection.
+            ...(userStore.email ? { login_hint: userStore.email } : {}),
             callback: (response) => {
                 const userStore = useUserStore();
-                if (response.credential) {
+                    if (response.credential) {
                     console.log('Login request successful.');
                     const userData = decodeJwt(response.credential);
                     userStore.setUser(userData);
-                    GApiSvc.requestDriveAccess(); // Chain into AuthZ on login. Might not work on auto-login
+                    // Don't automatically request Drive access here. Doing so during
+                    // One Tap/auto-login can trigger pop-up blocking or inconsistent behavior.
+                    // Let the UI trigger `GApiSvc.requestDriveAccess()` explicitly when appropriate.
                 } else {
                     console.log('Login request failed.');
                     userStore.clearUser();
@@ -222,21 +229,69 @@ export class GApiSvc {
         });
     }
 
-    static signIn() {
-        // All configuration was done earlier in initApiClient
-        google.accounts.id.prompt();
+    static signIn(forceChooser = false) {
+        // If forceChooser is true, always disable autoSelect so the account chooser is shown.
+        try {
+            if (forceChooser) {
+                google.accounts.id.disableAutoSelect();
+            } else {
+                const userStore = useUserStore();
+                if (!userStore.sub) {
+                    google.accounts.id.disableAutoSelect();
+                }
+            }
+        } catch (e) {
+            // If useUserStore can't be resolved here for any reason, ignore and prompt.
+        }
+        // Cancel any pending One Tap / prompt flows, then prompt after a short delay.
+        // This helps avoid FedCM AbortError races that occur when immediately prompting
+        // after a sign-out or previous aborted flow.
+        try {
+            if (typeof google.accounts.id.cancel === 'function') {
+                google.accounts.id.cancel();
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        // Small delay to avoid browser FedCM timing races. 200-300ms is usually sufficient.
+        setTimeout(() => {
+            try {
+                google.accounts.id.prompt();
+            } catch (err) {
+                // Retry once on AbortError which can happen in FedCM flows
+                const isAbort = String(err).includes('AbortError');
+                if (isAbort) {
+                    setTimeout(() => {
+                        try {
+                            google.accounts.id.prompt();
+                        } catch (err2) {
+                            console.warn('google.accounts.id.prompt retry failed', err2);
+                        }
+                    }, 500);
+                } else {
+                    console.warn('google.accounts.id.prompt failed', err);
+                }
+            }
+        }, 250);
     }
 
     static signOut() {
         const userStore = useUserStore();
         google.accounts.id.disableAutoSelect();
-        userStore.clearUser();
-        if (accessToken.value) {
-            google.accounts.oauth2.revoke(accessToken.value.access_token, () => {
-                accessToken.value = null;
-                gapi.client.setToken(null);
-            });
+        // Cancel any pending One Tap / FedCM flows to avoid races if the user signs in again quickly.
+        try {
+            if (typeof google.accounts.id.cancel === 'function') {
+                google.accounts.id.cancel();
+            }
+        } catch (e) {
+            // ignore
         }
+        userStore.clearUser();
+
+        // Do not revoke the token. It would revoke the app permission, not just invalidate the one token.
+        accessToken.value = null;
+        gapi.client.setToken(null);
     }
 
     static isSignedIn() {
