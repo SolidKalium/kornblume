@@ -3,10 +3,11 @@
 Our source is the [必要的记录](https://www.kdocs.cn/l/cd5MWeCl5bKw) project, which collects and aggregates drop rate data. They make this available as CC BY-NC 4.0 and they are given credit in the Credits modal on Kornblume's home page.
 
 ## Using the script
-- Download the **误差** tab as a csv from the [必要的记录](https://www.kdocs.cn/l/cd5MWeCl5bKw) project site. This may require a Kingsoft (kdocs / WPS) account.
+- Download the **Episode_rate** tab as a csv from the [必要的记录](https://www.kdocs.cn/l/cd5MWeCl5bKw) project site. This may require a Kingsoft (kdocs / WPS) account.
 - Place the csv in the `/scripts/drop_rates/in` folder
-- Run the script *TODO*
-- Copy result to *TODO*? Or it may be autoplaced inside the project.
+- Run the script `npm run stage-process`
+- Copy result to `/public/data/stages#_#_greedy.json` and add the insight & resource levels that don't change.
+  - In the future, it could be auto-placed inside the project.
 
 ## Translations
 - 必要的记录 -> Necessary Records (project/spreadsheet title)
@@ -19,8 +20,8 @@ Our source is the [必要的记录](https://www.kdocs.cn/l/cd5MWeCl5bKw) project
 - 必要的记录 -> Bountiful Harvest (stage name)
 
 ## Data fields: Drop Rates
-We use the **误差** tab.
-Drop rate data is available on multiple different pages. But this one lists all resources for all stages and includes data about certainties.
+We use the **Episode_rate** tab.
+Drop rate data is available on multiple different pages. But this is one that lists all resources for all stages.
 
 - Level name
   - Example: `1-1故事Ver1.0`. Meaning: chapter 1, stage 1, story difficulty, version 1.0
@@ -34,7 +35,7 @@ Drop rate data is available on multiple different pages. But this one lists all 
 - **边际误差**: Marginal Error. This is likely a 95% confidence interval half width.
 - **上限期望**: Upper Expectation. This is likely the upper bound of the 95% confidence interval range.
 - Item code number columns: How many copies of the item are expected per run of the stage.
-  - The meaning of these numbers can be found on the Mapping tab. To avoid duplicating information, just check the script for the mapping.
+  - The Mapping tab provides the definitions of these item numbers. To avoid duplicating information, the mapping isn't duplicated in this README.
 
 ## Misc
-- Note: the furthest right column in Mapping is "ALL" (which happens to be 1000 when 1-indexed). If that file is ever committed, make sure it is appropriately trimmed first.
+- Note: the furthest right column in the Mapping tab is "ALL" (this is an ID, not a word, which happens to be column 1000 (1-indexed)). If that file is ever committed to the repository, make sure it is appropriately trimmed first.

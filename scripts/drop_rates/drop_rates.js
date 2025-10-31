@@ -7,23 +7,28 @@ const { parse } = require('@fast-csv/parse');
 const inputFilePath = path.join(__dirname, 'in', 'Episode_rate.csv'); // Uses tab name
 const outputFilePath = path.join(__dirname, 'out', 'stages.json');
 
-// TODO translate and read the text pages on the source sheets?
-const metaColumnNames = { // TODO use columns from Episode_rate
-    "name": "rawStageName", // Temporary
+const MIN_COUNT = 100; // Minimum sample size for a stage to be included
+
+
+
+const metaColumnNames = {
+    // "name": "rawStageName", // Temporary
     "cost": "cost",
-    "times": "times",
-    "isValid": "isValid", // boolean (arriving as string int)
-    "isEnough": "isEnough", // boolean (arriving as string int)
-    "eff": "efficiency",
-    "边际误差": "efficiencyMargin",
-    "上限期望": "efficiencyUpperBound",
+    "times": "count",
+    // "id": "kdocs-stage-id",
+    // "isValid": "isValid", // boolean (arriving as string int)
+    // "isVisible": "isVisible",
+    // "isEnough": "isEnough", // boolean (arriving as string int)
+    // "eff": "efficiency",
+    // "边际误差": "efficiencyMargin",
+    // "上限期望": "efficiencyUpperBound",
 };
 
 const resourceColumnNames = {
     "110101": "Trembling Tooth",
     "110102": "Liquefied Terror",
     "110103": "Biting Box",
-    "110104": "Bogey man",
+    "110104": "Bogeyman",
     "110201": "Magnesia Crystal",
     "110202": "Milled Magnesia",
     "110203": "Salted Mandrake",
@@ -67,7 +72,7 @@ const resourceColumnNames = {
 }
 
 const chapterNameToChapterCode = {
-    '丰收时令': 'HP',
+    '丰收时令': {'code': 'HP', 'category': 'resource', 'comment': 'wilderness materials'},
 };
 
 const parseVersion = (version) => {
@@ -87,8 +92,9 @@ const parseVersion = (version) => {
 }
 
 const getStageFields = (stageName) => {
-    // Normal: num - num (optional 故事 or 厄险) (optional Ver)
-    // `1-1故事Ver1.0` -> `1-1`
+    // Normal story stages
+    // Input format: chapterNum - stageNum (optional 故事 or 厄险) (optional Ver)
+    // Example: `1-1故事Ver1.0` -> `1-1`
     const storyRegex = /^(?<chapter>\d+)-(?<stage>\d+)\s?(?<difficulty>故事|厄险)?\s?(?<version>Ver[\d.]+)?/;
     const storyMatch = stageName.match(storyRegex);
     if (storyMatch) {
@@ -102,11 +108,13 @@ const getStageFields = (stageName) => {
             // chapter: parseInt(chapter, 10),
             // stage: parseInt(stage, 10),
             // isHard,
+            category: isHard ? 'Hard' : 'Story',
             version: parseVersion(version),
         };
     }
 
-    // Special: text number (optional Ver)
+    // Special stages
+    // Input format: text number (optional Ver)
     // `丰收时令1` -> `HP-1`
     const specialRegex = /^(?<chapter>.+)-?(?<stage>\d+)\s?(?<difficulty>故事|厄险)?\s?(?<version>Ver[\d.]+)?/;
     const specialMatch = stageName.match(specialRegex);
@@ -114,7 +122,7 @@ const getStageFields = (stageName) => {
         const { chapter, stage, difficulty, version} = specialMatch.groups;
 
         const isHard = difficulty === '厄险';
-        const chapterCode = chapterNameToChapterCode[chapter];
+        const { code: chapterCode, category } = chapterNameToChapterCode[chapter];
         const stageCode = `${chapterCode}-${stage}${isHard ? 'H' : ''}`;
 
         return {
@@ -122,6 +130,7 @@ const getStageFields = (stageName) => {
             // chapter: chapterCode,
             // stage: parseInt(stage, 10),
             // isHard,
+            category,
             version: parseVersion(version),
         }
     }
@@ -138,51 +147,63 @@ const transformRow = (row) => {
 
     const result = {};
 
+    // Add stage code, version, and category
+    if (row.name) {
+        const name = row.name;
+        const fields = getStageFields(name);
+        result.name = fields.code // Temporary
+        Object.assign(result, fields);
+    }
 
+    // Add cost and count
     for (const [csvColumn, jsonColumn] of Object.entries(metaColumnNames)) {
         const value = row[csvColumn];
-        // if (!value) {
-        //     continue;
-        // }
+
         if (['数据不足', '#VALUE!'].includes(value)) {
-            // TODO final approach for these
+            // Merges a few kinds of invalid cell states. Mainly for Margin of Error data
             result[jsonColumn] = 'INVALID';
         } else if (jsonColumn.substring(0, 2) === 'is') {
             // Handle booleans
             result[jsonColumn] = value === '1';
+        } else if (isFinite(value)) {
+            // Handle numbers
+            result[jsonColumn] = Number(value);
         } else {
-            // TODO normalize percentages to decimals
-            // TODO store numeric values as numbers
+            // NOTE: for Margin of Error data: percentages should be normalized to decimals. But we aren't currently using that tab.
             result[jsonColumn] = value;
         }
     }
+    if (result.count < MIN_COUNT) {
+        // Enforce sample size
+        // console.log(`Skipping ${result.code} for low count: ${result.count}`)
+        return null;
+    }
 
-    // TOOD put this in a resource sub-object
+    // Add drops
+    result.drops = {};
+    let totalDropRate = 0;
     for (const [csvColumn, jsonColumn] of Object.entries(resourceColumnNames)) {
         const strValue = row[csvColumn];
         if (!strValue) {
             continue;
         }
         const value = parseFloat(strValue);
+        if (value > 0) {
+            // Excludes guard value -1
+            totalDropRate += value;
+        }
         if (value < 0.001) {
             // Handles: 0, -1, very small numbers
             // This is safe because even rare drops are usually multiple percent
             continue;
         }
-        // TODO round remaining values to 4 or 5 decimal places or sigfigs
-        // TODO these aren't drop rates... They may need to be normalized. Or a different sheet used. We probably want the episode_rate tab instead. It looks like it includes only rows that are isValid or isVisible, where isVisible is essentially an override for cases where isValid is false but we should trust the data anyways. Need to validate those against the data currently live on the site. Seems like it mostly matches.
-        // But for 7-16H: why do the numbers almost match v1.9 instead of v2.6? I'm guessing the 1.9 numbers are being used, but are slightly out of date. Admittedly, the 2.6 numbers aren't as robust (44 examples).
-        // And 7-18 has no drops on story or hard??? That doesn't seem right. I guess it just really has no data.
-        // We may want to validate that each stage we keep drops at least one thing.
-        // May also want to check how many things each stage drops, on average?
-        result[jsonColumn] = value;
+        result.drops[jsonColumn] = Math.round(value * result.count);
     }
-
-    if (row.name) {
-        const name = row.name;
-        const fields = getStageFields(name);
-        Object.assign(result, fields);
-    }
+    if (totalDropRate < 0.05) {
+        // Some early stages have very, very low drop rates across all items
+        // console.log(`Skipping ${result.code} with total drop rate ${totalDropRate}`)
+        return null;
+    };
 
     // If the column doesn't exist, just return the original row
     return result;
@@ -191,35 +212,49 @@ const transformRow = (row) => {
 const processData = async () => {
     const records = [];
     const parser = parse({ headers: true })
-        .on('error', error => {
-            console.error('CSV parsing error:', error);
-            process.exit(1);
-        })
         .on('data', row => {
-            // Collect rows
+            // Convert rows from csv to json
             const transformedRow = transformRow(row);
+            // If the csv row lacked meaningful data, it returned null, so skip it
             if (transformedRow) {
                 records.push(transformedRow);
             }
         })
         .on('end', (rowCount) => {
-            // // TODO Perform version filtering
-            // const mostRecentLevels = {};
-            // records.forEach(row => {
-            //     const levelKey = `${row.chapter}-${row.stage}-${row.difficulty}`;
-            //     const currentVersion = parseFloat(row.version);
-            //     if (
-            //       !mostRecentLevels[levelKey] ||
-            //       currentVersion > parseFloat(mostRecentLevels[levelKey].version)
-            //     ) {
-            //         mostRecentLevels[levelKey] = row;
-            //     }
-            // });
-            // const finalData = Object.values(mostRecentLevels);
+            // Convert from a list to an object
+            // Keep the highest game version for each stage
+            const stages = {};
+            records.forEach(row => {
+                const {code, version} = row;
+                if (
+                  !stages[code] ||
+                  version > stages[code].version
+                ) {
+                    stages[code] = row;
+                }
+            });
+
+            // Clean up keys that are no longer needed
+            const keysToRemove = [
+                'version',
+                'name', // temporary
+            ];
+            Object.values(stages).forEach(stage => {
+                keysToRemove.forEach(key => {
+                    delete stage[key];
+                })
+            });
+
+            // Add id to each row
+            let nextID = 9000; // Starting high to avoid conflicts
+            Object.values(stages).forEach(stage => {
+                stage.id = nextID;
+                nextID += 1;
+            });
 
             // Write the final JSON
-            fs.writeFileSync(outputFilePath, JSON.stringify(records, null, 2), 'utf-8');
-            console.log(`Successfully processed ${rowCount} rows and saved data to ${outputFilePath}`);
+            fs.writeFileSync(outputFilePath, JSON.stringify(stages, null, 2), 'utf-8');
+            console.log(`Successfully processed ${rowCount} csv rows and saved data to ${outputFilePath}. ${Object.keys(stages).length} entries after processing.`);
         });
 
     fs.createReadStream(inputFilePath).pipe(parser);
@@ -231,18 +266,8 @@ processData().catch(err => {
 });
 
 // //////// TODO list ////////
-// cleanup README
+// translate and read the text pages on the source sheets?
 // check if file can be auto-downloaded using axios or similar. Use manual download for now. Could set it up to dynamically try both, but that's definitely overkill for the moment.
-// Validate against destination format
-// Validate that we are obtaining enough data to provide a reasonably full menu of options.
 // Create static data to merge with?
-// Improve credit given to be closer to the actual planner instead of on the home page?
-// Consider optimizing file streaming. Favor simplicity and reliability.
-// Consider improving error handling (don't call process.exit(1) in two different places)
+// Move attribution closer to the planner/stage/item views instead of on the home page?
 // Is it worth using typescript? Let's skip while drafting.
-// Change @fast-csv/parse from dev to an optional dependency?
-
-// //// Logic ////
-// Make sure levels have a reasonable amount of data backing them up
-// Only consider latest version listed per level. Filter out any data that is low confidence.
-// Filter out any "blank" rows
