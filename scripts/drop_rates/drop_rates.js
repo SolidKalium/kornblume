@@ -8,8 +8,8 @@ const inputFilePath = path.join(__dirname, 'in', 'Episode_rate.csv'); // Uses ta
 const outputFilePath = path.join(__dirname, 'out', 'stages.json');
 
 const MIN_COUNT = 100; // Minimum sample size for a stage to be included
-
-
+const MIN_ITEM_DROP_RATE = 0.001; // Minimum for an item to be included on a stage
+const MIN_STAGE_TOTAL_DROP_RATE = 0.05;
 
 const metaColumnNames = {
     // "name": "rawStageName", // Temporary
@@ -25,6 +25,12 @@ const metaColumnNames = {
 };
 
 const resourceColumnNames = {
+    // Things not named according to the English in-game
+    // Golden Grass Incense (Golden Herb Incense)
+    // Luminite Ore (Pyroxene Ore)
+    // Fox Tail (Alopecurus Pratensis)
+    // Red Lacquer Slab (Red Lacquer Tablet)
+    // Goldbell Spirit Bottle (Golden Bell Essence Bottle)
     "110101": "Trembling Tooth",
     "110102": "Liquefied Terror",
     "110103": "Biting Box",
@@ -41,21 +47,21 @@ const resourceColumnNames = {
     "110402": "Rough Silver Ingot",
     "110403": "Holy Silver",
     "110404": "Silver Bullet",
-    "110501": "Spell Of Banishing",
-    "110502": "Spell Of Fortune",
+    "110501": "Spell of Banishing",
+    "110502": "Spell of Fortune",
     "110503": "Prophetic Bird",
-    "110504": "Murmur Of Insanity",
-    "110602": "Cicada Wing",
+    "110504": "Murmur of Insanity",
+    "110602": "Cicada Wings",
     "110603": "Winged Key",
     "110604": "Glowing Mothwing",
     "110702": "Perpetual Cog",
     "110703": "Goose Neck",
     "110704": "Watch Core",
-    "110802": "Fox Tail",
-    "110803": "Golden Grass Incense",
-    "110804": "Goldbell Spirit Bottle",
-    "110902": "Luminite Ore",
-    "110903": "Red Lacquer Slab",
+    "110802": "Alopecurus Pratensis", // "Fox Tail",
+    "110803": "Golden Herb Incense", // "Golden Grass Incense",
+    "110804": "Golden Bell Essence Bottle", // "Goldbell Spirit Bottle",
+    "110902": "Pyroxene Ore", // "Luminite Ore",
+    "110903": "Red Lacquer Tablet", // "Red Lacquer Slab",
     "110904": "Emerald Slate",
     "111001": "Solidus",
     "111002": "Clawed Pendulum",
@@ -72,7 +78,7 @@ const resourceColumnNames = {
 }
 
 const chapterNameToChapterCode = {
-    '丰收时令': {'code': 'HP', 'category': 'resource', 'comment': 'wilderness materials'},
+    '丰收时令': {'code': 'HP', 'category': 'Resource', 'comment': 'wilderness materials'},
 };
 
 const parseVersion = (version) => {
@@ -192,14 +198,14 @@ const transformRow = (row) => {
             // Excludes guard value -1
             totalDropRate += value;
         }
-        if (value < 0.001) {
+        if (value < MIN_ITEM_DROP_RATE) {
             // Handles: 0, -1, very small numbers
             // This is safe because even rare drops are usually multiple percent
             continue;
         }
         result.drops[jsonColumn] = Math.round(value * result.count);
     }
-    if (totalDropRate < 0.05) {
+    if (totalDropRate < MIN_STAGE_TOTAL_DROP_RATE) {
         // Some early stages have very, very low drop rates across all items
         // console.log(`Skipping ${result.code} with total drop rate ${totalDropRate}`)
         return null;
@@ -237,7 +243,7 @@ const processData = async () => {
             // Clean up keys that are no longer needed
             const keysToRemove = [
                 'version',
-                'name', // temporary
+                'code', // temporary
             ];
             Object.values(stages).forEach(stage => {
                 keysToRemove.forEach(key => {
