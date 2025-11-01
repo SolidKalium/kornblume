@@ -1,0 +1,143 @@
+{
+  "The Poussiere VI": {
+    "id": 115,
+    "name": "The Poussiere VI",
+    "category": "Resource",
+    "cost": 25,
+    "count": 1,
+    "drops": {
+      "Dust": 12500,
+      "Sharpodonty": 250
+    }
+  },
+  "Mintage Aesthetics VI": {
+    "id": 116,
+    "name": "Mintage Aesthetics VI",
+    "category": "Resource",
+    "cost": 25,
+    "count": 1,
+    "drops": {
+      "Sharpodonty": 9000
+    }
+  },
+  "Mountain Echoes II": {
+    "id": 117,
+    "name": "Mountain Echoes II",
+    "category": "Insight",
+    "cost": 18,
+    "count": 1,
+    "drops": {
+      "Page of Mineral Wealth": 2
+    }
+  },
+  "Mountain Echoes IV": {
+    "id": 118,
+    "name": "Mountain Echoes IV",
+    "category": "Insight",
+    "cost": 24,
+    "count": 1,
+    "drops": {
+      "Scroll of Mineral Wealth": 2
+    }
+  },
+  "Mountain Echoes VI": {
+    "id": 119,
+    "name": "Mountain Echoes VI",
+    "category": "Insight",
+    "cost": 30,
+    "count": 1,
+    "drops": {
+      "Tome of Mineral Wealth": 2
+    }
+  },
+  "Starfall Locale II": {
+    "id": 120,
+    "name": "Starfall Locale II",
+    "category": "Insight",
+    "cost": 18,
+    "count": 1,
+    "drops": {
+      "Page of Starlit Ascent": 2
+    }
+  },
+  "Starfall Locale IV": {
+    "id": 121,
+    "name": "Starfall Locale IV",
+    "category": "Insight",
+    "cost": 24,
+    "count": 1,
+    "drops": {
+      "Scroll of Starlit Ascent": 2
+    }
+  },
+  "Starfall Locale VI": {
+    "id": 122,
+    "name": "Starfall Locale VI",
+    "category": "Insight",
+    "cost": 30,
+    "count": 1,
+    "drops": {
+      "Tome of Starlit Ascent": 2
+    }
+  },
+  "Sylvanus Shape II": {
+    "id": 123,
+    "name": "Sylvanus Shape II",
+    "category": "Insight",
+    "cost": 18,
+    "count": 1,
+    "drops": {
+      "Page of Plantal Vimen": 2
+    }
+  },
+  "Sylvanus Shape IV": {
+    "id": 124,
+    "name": "Sylvanus Shape IV",
+    "category": "Insight",
+    "cost": 24,
+    "count": 1,
+    "drops": {
+      "Scroll of Plantal Vimen": 2
+    }
+  },
+  "Sylvanus Shape VI": {
+    "id": 125,
+    "name": "Sylvanus Shape VI",
+    "category": "Insight",
+    "cost": 30,
+    "count": 1,
+    "drops": {
+      "Tome of Plantal Vimen": 2
+    }
+  },
+  "Brutes Wilds II": {
+    "id": 126,
+    "name": "Brutes Wilds II",
+    "category": "Insight",
+    "cost": 18,
+    "count": 1,
+    "drops": {
+      "Page of Beastly Thirst": 2
+    }
+  },
+  "Brutes Wilds IV": {
+    "id": 127,
+    "name": "Brutes Wilds IV",
+    "category": "Insight",
+    "cost": 24,
+    "count": 1,
+    "drops": {
+      "Scroll of Beastly Thirst": 2
+    }
+  },
+  "Brutes Wilds VI": {
+    "id": 128,
+    "name": "Brutes Wilds VI",
+    "category": "Insight",
+    "cost": 30,
+    "count": 1,
+    "drops": {
+      "Tome of Beastly Thirst": 2
+    }
+  }
+}

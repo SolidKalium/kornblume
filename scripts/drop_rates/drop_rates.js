@@ -4,12 +4,22 @@ const fs = require('fs');
 const path = require('path');
 const { parse } = require('@fast-csv/parse');
 
-const inputFilePath = path.join(__dirname, 'in', 'Episode_rate.csv'); // Uses tab name
-const outputFilePath = path.join(__dirname, 'out', 'stages.json');
-
+// //// CONFIG //// //
+const OUTPUT_VERSION = '' // '3.0'; // If present, saves the output into the project instead of the script's /out folder
 const MIN_COUNT = 100; // Minimum sample size for a stage to be included
 const MIN_ITEM_DROP_RATE = 0.001; // Minimum for an item to be included on a stage
-const MIN_STAGE_TOTAL_DROP_RATE = 0.05;
+const MIN_STAGE_TOTAL_DROP_RATE = 0.05; // Minimum drop rate across all items for a stage to be included
+
+
+// File paths
+const inputFilePath = path.join(__dirname, 'in', 'Episode_rate.csv'); // Uses tab name
+const staticInputPath = path.join(__dirname, 'in', 'static.json');
+
+let outputFilePath = path.join(__dirname, 'out', 'stages.json');
+if (OUTPUT_VERSION) {
+    const outputFileName = 'stages' + OUTPUT_VERSION.replace('.','_') + '_greedy.json';
+    outputFilePath = path.join(__dirname, '..' /** scripts */, '..' /** git root */, 'public', 'data', outputFileName);
+}
 
 const metaColumnNames = {
     // "name": "rawStageName", // Temporary
@@ -73,8 +83,8 @@ const resourceColumnNames = {
     "111008": "Rheingold",
     "111012": "Golden Beetle",
     "111013": "Golden Compass",
-    "190007": "Kern Baby",
-    "190008": "Kern Madam",
+    // "190007": "Kern Baby", // Hiding these levels
+    // "190008": "Kern Madam",
 }
 
 const chapterNameToChapterCode = {
@@ -215,6 +225,28 @@ const transformRow = (row) => {
     return result;
 };
 
+const mergeObjects = (obj1, obj2) => {
+    // const merged = { ...obj1, ...obj2 };
+    const merged = { ...obj1 };
+    Object.entries(obj2).forEach(([code, data]) => {
+        if (merged[code]) {
+            console.warn(`Overwriting generated data for ${code} with static stage definition.`);
+        }
+        merged[code] = data;
+    });
+    return merged;
+};
+
+const loadJson = (fileName) => {
+    try {
+        const json = fs.readFileSync(fileName, 'utf-8');
+        return JSON.parse(json);
+    } catch (error) {
+        console.warn(`Unable to load file: ${fileName}`, error);
+    }
+    return {}
+};
+
 const processData = async () => {
     const records = [];
     const parser = parse({ headers: true })
@@ -258,9 +290,17 @@ const processData = async () => {
                 nextID += 1;
             });
 
+            // Get static data and merge with generated stages
+            const staticStageData = loadJson(staticInputPath);
+            const mergedStages = mergeObjects(stages, staticStageData);
+
             // Write the final JSON
-            fs.writeFileSync(outputFilePath, JSON.stringify(stages, null, 2), 'utf-8');
-            console.log(`Successfully processed ${rowCount} csv rows and saved data to ${outputFilePath}. ${Object.keys(stages).length} entries after processing.`);
+            fs.writeFileSync(outputFilePath, JSON.stringify(mergedStages, null, 2), 'utf-8');
+            console.log(
+                `Successfully processed ${rowCount} csv rows.\n` +
+                `${Object.keys(stages).length} entries imported after processing.\n` +
+                `Written to ${path.basename(outputFilePath)}`
+            );
         });
 
     fs.createReadStream(inputFilePath).pipe(parser);
@@ -271,9 +311,10 @@ processData().catch(err => {
     process.exit(1);
 });
 
-// //////// TODO list ////////
-// translate and read the text pages on the source sheets?
-// check if file can be auto-downloaded using axios or similar. Use manual download for now. Could set it up to dynamically try both, but that's definitely overkill for the moment.
-// Create static data to merge with?
+// //////// LATER list ////////
+// Trying to auto-download in the script probably isn't worthwhile
+//      - Send formatted request to https://www.kdocs.cn/api/v3/office/file/235880063818/async-export and get task id
+//      - Periodically check on the task with https://www.kdocs.cn/api/v3/office/asynctasks/normal_export?id=
+//      - It eventually returns status:finished and provides a url to download
+//      - It likely requires a logged-in session and may have other protections
 // Move attribution closer to the planner/stage/item views instead of on the home page?
-// Is it worth using typescript? Let's skip while drafting.
