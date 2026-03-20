@@ -4,11 +4,14 @@ import { RouterView } from 'vue-router';
 import { useGlobalStore } from './stores/global';
 import { setGlobalLastModifiedTimestamp } from '@/utils/localStorage';
 import { removeDuplicateWarehouseItems } from '@/composables/warehouse';
+import { GApiSvc } from '@/composables/gApi';
+import { useUserStore } from '@/stores/userStore';
 
 import Navbar from './components/navbar/Navbar.vue';
 import LoadingScreen from './components/navbar/LoadingScreen.vue';
 
 const globalStore = useGlobalStore();
+const userStore = useUserStore();
 
 function getLocalStorageDataByKey(key) {
     return JSON.parse(localStorage.getItem(key) as string);
@@ -82,6 +85,13 @@ onMounted(() => {
     clearLegacyData();
     setGlobalLastModifiedTimestamp();
     removeDuplicateWarehouseItems();
+    // If the user previously granted Drive access, silently reconnect and sync.
+    // This avoids loading Google scripts for users who haven't opted in.
+    if (GApiSvc.isConfigured() && userStore.hasDriveConsent) {
+        GApiSvc.init().then(() => {
+            GApiSvc.requestDriveAccess();
+        }).catch(() => { /* ignore init errors at app level */ });
+    }
 });
 </script>
 

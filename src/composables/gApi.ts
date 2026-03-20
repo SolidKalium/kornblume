@@ -33,6 +33,12 @@ const subscriberCount = ref(0);
 
 let tokenClient: google.accounts.oauth2.TokenClient | null = null;
 
+// When true, the next successful Drive token acquisition is a result of an explicit
+// sign-in and should use syncDriveOnLogin (prefer existing Drive data regardless of
+// timestamps) instead of the normal bidirectional syncDrive.
+// Reset to false in both the success and error paths.
+let pendingLoginSync = false;
+
 // StoredToken augments the OAuth TokenResponse with an absolute expiry time
 type StoredToken = Omit<google.accounts.oauth2.TokenResponse, 'error' | 'error_description' | 'error_uri'> & {
     expires_at: number; // ms since epoch
@@ -190,6 +196,7 @@ export class GApiSvc {
                     if (!isExpectedError) {
                         error.value = new Error(response.error_description || response.error);
                     }
+                    pendingLoginSync = false;
                     accessToken.value = null;
                 } else {
                     error.value = null; // Clear any previous errors on success.
@@ -209,6 +216,15 @@ export class GApiSvc {
                         console.warn('gapi.client.setToken failed', e);
                     }
                     userStore.setHasDriveConsent(true);
+                    // On an explicit login, prefer downloading Drive data without overwriting remote.
+                    // On a background reconnect (App.vue), use bidirectional timestamp-based sync.
+                    const isLogin = pendingLoginSync;
+                    pendingLoginSync = false;
+                    if (isLogin) {
+                        syncDriveOnLogin();
+                    } else {
+                        syncDrive();
+                    }
                 }
             },
         });
@@ -302,6 +318,13 @@ export class GApiSvc {
     static getEmail() {
         const userStore = useUserStore();
         return userStore.email;
+    }
+
+    // Call before requestDriveAccess() when the request follows an explicit sign-in.
+    // The token callback will then use syncDriveOnLogin (prefer existing Drive data
+    // regardless of timestamps) instead of the normal bidirectional syncDrive.
+    static markNextSyncAsLogin() {
+        pendingLoginSync = true;
     }
 
     static requestDriveAccess() {

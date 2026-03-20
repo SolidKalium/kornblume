@@ -1,24 +1,46 @@
 <script setup lang="ts" name="ProfileView">
-import { ref, watch } from 'vue';
+import { type ComponentPublicInstance, ref, watch } from 'vue';
 import { exportKornblumeData, importKornblumeData, resetKornblumeData } from '@/utils';
 import { usePullsRecordStore } from '@/stores/pullsRecordStore';
-import { GApiSvc, useGoogleAPIs, syncDrive, syncDriveOnLogin } from '@/composables/gApi';
+import { GApiSvc, useGoogleAPIs } from '@/composables/gApi';
 
 const fileInput = ref<HTMLElement | null>(null);
 const showEmail = ref(false);
 const isGapiInitialized = ref(false); // This will be true only when the GApiSvc is fully ready.
 
+// Track the rendered Google Sign-In button element across v-if mount/unmount cycles.
+const googleButtonEl = ref<HTMLElement | null>(null);
+
 // Use the composable to get reactive, shared state, but manage readiness locally.
 const { isSignedIn, hasDriveConsent } = useGoogleAPIs();
 
-// This effect runs when the component mounts and whenever its dependencies change.
-// We wait for the API to be ready, then check the sign-in status and sync.
+// Called by Vue's function ref whenever the Google button container mounts or unmounts.
+// Handles the sign-out → re-login cycle: the div re-mounts and the button re-renders.
+const mountGoogleSignInButton = (el: Element | ComponentPublicInstance | null) => {
+    googleButtonEl.value = el instanceof HTMLElement ? el : null;
+    if (googleButtonEl.value && isGapiInitialized.value) {
+        google.accounts.id.renderButton(googleButtonEl.value, {
+            type: 'standard',
+            theme: 'outline',
+            size: 'large',
+        });
+    }
+};
+
+// Wait for scripts to load, then sync or render the sign-in button as appropriate.
 if (GApiSvc.isConfigured()) {
     GApiSvc.init().then(() => {
         isGapiInitialized.value = true;
-        // We can sync drive here if the user is already signed in from a previous session.
-        if (isSignedIn.value) {
-            syncDrive();
+        if (isSignedIn.value && GApiSvc.hasDriveConsent()) {
+            // Silently re-acquire the Drive token. The token callback calls syncDrive().
+            GApiSvc.requestDriveAccess();
+        } else if (!isSignedIn.value && googleButtonEl.value) {
+            // Scripts loaded before the button container mounted: render the button now.
+            google.accounts.id.renderButton(googleButtonEl.value, {
+                type: 'standard',
+                theme: 'outline',
+                size: 'large',
+            });
         }
     }).catch(err => {
         console.error('GApiSvc init failed:', err);
@@ -50,19 +72,15 @@ const resetTracker = () => {
     // window.location.reload();
 };
 
-const loginGoogleDrive = () => {
-    // Just trigger the sign-in flow. The reactive `isSignedIn` ref
-    // from useGoogleAPIs() will update automatically on success.
-    GApiSvc.signIn(true);
-};
-
-// Only run syncDriveOnLogin when the user transitions from signed-out -> signed-in.
+// On login: first attempt a silent Drive token request (detects cross-device consent;
+// the token callback calls syncDrive() on success), then call syncDriveOnLogin() in
+// case Drive consent was already active earlier in the session.
 watch(
     () => isSignedIn.value,
     (newVal, oldVal) => {
         if (!oldVal && newVal) {
-            // actual login event
-            syncDriveOnLogin();
+            GApiSvc.markNextSyncAsLogin();
+            GApiSvc.requestDriveAccess();
         }
     }
 );
@@ -107,8 +125,9 @@ const signOutGoogleDrive = () => {
             </div> -->
 
             <div class="flex justify-center items-center p-2 space-x-5">
-                <button :disabled="!isGapiInitialized" v-if="!isSignedIn" class="green-button" @click="loginGoogleDrive">{{
-                $t('login-google-drive') }} <i class="fa-brands fa-google-drive"></i> </button>
+                <!-- Google renders its own sign-in button here. Using renderButton() avoids the
+                     One Tap cooldown/backoff that can occur when prompt() is called from a custom button. -->
+                <div v-if="!isSignedIn" :ref="mountGoogleSignInButton"></div>
                 <div class="flex flex-col justify-center items-center" v-else>
                     <div class="flex items-center space-x-2">
                         <button :disabled="!isGapiInitialized" class="blue-button" @click="signOutGoogleDrive">{{
