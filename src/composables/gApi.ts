@@ -151,7 +151,6 @@ export class GApiSvc {
         }
         const userStore = useUserStore();
         const autoSelect = !!userStore.sub;
-        console.log('autoSelect', autoSelect);
 
         google.accounts.id.initialize({ // This should only be called once per page load.
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
@@ -470,7 +469,7 @@ export async function syncDriveOnLogin() {
         const file = files.find((f: gapi.client.drive.File) => f.name === 'kornblume.json');
 
         if (!file) {
-            await GApiSvc.createFile('kornblume.json', JSON.stringify(localStorage));
+            await GApiSvc.createFile('kornblume.json', JSON.stringify(getKornblumeData()));
             console.log('kornblume.json created');
         } else if (file.id) {
             console.log('kornblume.json exists. importing data...');
