@@ -39,7 +39,7 @@ We are translating Kornblume to other languages and we need your help! [Help us 
 - [VSCode](https://code.visualstudio.com/)
 - [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur)
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-      **Strongly recommend setting up ESLint to auto-fix on save, please check [here](https://www.digitalocean.com/community/tutorials/workflow-auto-eslinting#step-4-adding-code-actions-on-save)**.
+      **Strongly recommend setting up ESLint to auto-fix on save, please [see DigitalOcean's tutorial](https://www.digitalocean.com/community/tutorials/workflow-auto-eslinting#step-4-adding-code-actions-on-save)**.
 - [i18n Ally](https://marketplace.visualstudio.com/items?itemName=lokalise.i18n-ally)
 
 ### Customize configuration
@@ -82,5 +82,5 @@ This is one way to manually test any changes on a device that isn't on the same 
 This app optionally uses the Google API to sync data using Google Drive. You can acquire credentials from the [Google Cloud Console](https://console.cloud.google.com/auth/).
 - Create an **OAuth 2.0 Client ID** of type *Web Application*.
 - Under "Authorized JavaScript origins," add your development URIs (e.g., `http://localhost:5173` or `https://[username].github.io`).
-- Data Access permissions requested should include `.../auth/userinfo.email`, `.../auth/drive.file`, and `.../auth/drive.appdata`.
+- Data Access permissions requested should include `.../auth/userinfo.email`, `.../auth/drive.file`, and `.../auth/drive.appdata`. Note that Kornblume doesn't currently use the appData permission, which is why the app's data is visible in Google Drive.
 - Add your API Key and Client ID to your `.env` file, based on `.env.example`
