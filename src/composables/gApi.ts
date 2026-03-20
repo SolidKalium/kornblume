@@ -244,53 +244,6 @@ export class GApiSvc {
         });
     }
 
-    static signIn(forceChooser = false) {
-        // If forceChooser is true, always disable autoSelect so the account chooser is shown.
-        try {
-            if (forceChooser) {
-                google.accounts.id.disableAutoSelect();
-            } else {
-                const userStore = useUserStore();
-                if (!userStore.sub) {
-                    google.accounts.id.disableAutoSelect();
-                }
-            }
-        } catch (e) {
-            // If useUserStore can't be resolved here for any reason, ignore and prompt.
-        }
-        // Cancel any pending One Tap / prompt flows, then prompt after a short delay.
-        // This helps avoid FedCM AbortError races that occur when immediately prompting
-        // after a sign-out or previous aborted flow.
-        try {
-            if (typeof google.accounts.id.cancel === 'function') {
-                google.accounts.id.cancel();
-            }
-        } catch (e) {
-            // ignore
-        }
-
-        // Small delay to avoid browser FedCM timing races. 200-300ms is usually sufficient.
-        setTimeout(() => {
-            try {
-                google.accounts.id.prompt();
-            } catch (err) {
-                // Retry once on AbortError which can happen in FedCM flows
-                const isAbort = String(err).includes('AbortError');
-                if (isAbort) {
-                    setTimeout(() => {
-                        try {
-                            google.accounts.id.prompt();
-                        } catch (err2) {
-                            console.warn('google.accounts.id.prompt retry failed', err2);
-                        }
-                    }, 500);
-                } else {
-                    console.warn('google.accounts.id.prompt failed', err);
-                }
-            }
-        }, 250);
-    }
-
     static signOut() {
         const userStore = useUserStore();
         google.accounts.id.disableAutoSelect();
